@@ -118,7 +118,10 @@ export function Classes() {
                       )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {c.students === 0 && <button className="btn sm danger" onClick={() => remove(c.id)}>Remove</button>}
+                      <span className="row actions">
+                        <Link className="btn sm" to={`/classes/${c.id}/subjects`}>Subjects</Link>
+                        {c.students === 0 && <button className="btn sm danger" onClick={() => remove(c.id)}>Remove</button>}
+                      </span>
                     </td>
                   </tr>
                 ))}

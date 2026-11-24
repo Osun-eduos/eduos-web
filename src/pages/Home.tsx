@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { ErrorAlert, formatDay, formatPhone, pct } from '../components/ui';
+import { ErrorAlert, formatDay, formatPhone, pct, SheetPill } from '../components/ui';
 import { ageFrom, ROLE_LABEL } from '../roles';
-import type { AttendanceToday, Role, StudentAttendance, StudentSummary } from '../types';
+import type { AttendanceToday, MySubjects, ReportCardTerm, Role, StudentAttendance, StudentSummary } from '../types';
 
 interface Stats {
   accountsByRole: Record<Role, number>;
@@ -16,6 +16,8 @@ interface Stats {
   session: string | null;
   pendingTransfersIn: number;
   attendanceToday: AttendanceToday | null;
+  term: { id: string; name: string; session: string } | null;
+  scoresAwaitingApproval: number;
 }
 
 interface MyClasses {
@@ -75,6 +77,31 @@ function ComingNext({ items }: { items: string[] }) {
   );
 }
 
+function TeacherSubjects() {
+  const [data, setData] = useState<MySubjects | null>(null);
+  useEffect(() => {
+    api<MySubjects>('/my/subjects').then(setData).catch(() => {});
+  }, []);
+  if (!data?.subjects.length) return null;
+  const todo = data.subjects.filter((s) => !s.sheet || s.sheet.status === 'DRAFT' || s.sheet.status === 'RETURNED');
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="row between">
+        <h2>Scores{data.term ? ` · ${data.term.name}` : ''}</h2>
+        <Link className={`btn sm${todo.length ? ' pri' : ''}`} to="/scores">{todo.length ? `${todo.length} to finish` : 'Open scores'}</Link>
+      </div>
+      <table className="mt"><tbody>
+        {data.subjects.map((s) => (
+          <tr key={s.id}>
+            <td><Link to={`/scores/${s.id}`}>{s.name}</Link> <span className="small muted">· {s.class.name}</span></td>
+            <td style={{ textAlign: 'right' }}><SheetPill status={s.sheet?.status} /></td>
+          </tr>
+        ))}
+      </tbody></table>
+    </div>
+  );
+}
+
 function TeacherHome() {
   const [data, setData] = useState<MyClasses | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +112,7 @@ function TeacherHome() {
   if (!data) return <p className="muted">Loading your classes…</p>;
   if (!data.classes.length)
     return (
-      <div className="card">
+      <div className="card" style={{ marginBottom: 14 }}>
         <h2>No class yet</h2>
         <p className="muted">Your school administrator hasn't made you a class teacher{data.session ? ` for ${data.session}` : ''} yet.</p>
       </div>
@@ -144,6 +171,16 @@ function ChildAttendance({ id }: { id: string }) {
   );
 }
 
+function ChildReport({ id }: { id: string }) {
+  const [terms, setTerms] = useState<ReportCardTerm[]>([]);
+  useEffect(() => {
+    api<ReportCardTerm[]>(`/report-cards/${id}/terms`).then(setTerms).catch(() => {});
+  }, [id]);
+  const latest = terms.find((t) => t.released);
+  if (!latest) return null;
+  return <span className="small">Report card: <b>{latest.name}, {latest.session}</b> is ready</span>;
+}
+
 function ParentHome() {
   const [kids, setKids] = useState<Child[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +205,7 @@ function ParentHome() {
           <span>{k.school?.name ?? 'Not enrolled in a school'}</span>
           <span>{k.currentClass ? <>Class <b>{k.currentClass.name}</b>{k.classTeacher && <> · class teacher {k.classTeacher}</>}</> : <span className="pill p-warn">No class yet</span>}</span>
           <ChildAttendance id={k.id} />
+          <ChildReport id={k.id} />
         </Link>
       ))}
     </div>
@@ -196,7 +234,7 @@ export function Home() {
         <div className="head">
           <div>
             <h1>Good day, {first}</h1>
-            <p>Ministry of Education · {ROLE_LABEL[user.role]}{stats?.session ? ` · ${stats.session} session` : ''}</p>
+            <p>Ministry of Education · {ROLE_LABEL[user.role]}{stats?.term ? ` · ${stats.term.name}, ${stats.term.session}` : stats?.session ? ` · ${stats.session} session` : ''}</p>
           </div>
           {user.role === 'MINISTRY_ADMIN' && (
             <div className="row">
@@ -206,6 +244,11 @@ export function Home() {
           )}
         </div>
         <ErrorAlert error={error} />
+        {stats?.session && !stats.term && user.role === 'MINISTRY_ADMIN' && (
+          <div className="alert info" style={{ marginBottom: 14 }}>
+            No term is current, so teachers can't enter scores. <Link to="/sessions">Set up the terms</Link>.
+          </div>
+        )}
         {noSession && user.role === 'MINISTRY_ADMIN' && (
           <div className="alert info" style={{ marginBottom: 14 }}>
             No academic session is open yet. Schools can't create classes until you <Link to="/sessions">open one</Link>.
@@ -224,7 +267,7 @@ export function Home() {
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} note="Accounts on a temporary password" />
         </div>
         <TodayAttendance a={stats?.attendanceToday} ministry />
-        <ComingNext items={['Score entry, results and report cards', 'State dashboard and LGA comparison', 'Absence SMS to parents']} />
+        <ComingNext items={['State dashboard and LGA comparison', 'Teacher registry and postings', 'Absence and results SMS to parents']} />
       </>
     );
   }
@@ -235,7 +278,7 @@ export function Home() {
         <div className="head">
           <div>
             <h1>Good day, {first}</h1>
-            <p>{user.school?.name} · <span className="mono">{user.school?.code}</span>{stats?.session ? ` · ${stats.session} session` : ''}</p>
+            <p>{user.school?.name} · <span className="mono">{user.school?.code}</span>{stats?.term ? ` · ${stats.term.name}, ${stats.term.session}` : stats?.session ? ` · ${stats.session} session` : ''}</p>
           </div>
           <div className="row">
             <Link className="btn" to="/accounts?new=1">Add a teacher or parent</Link>
@@ -244,6 +287,11 @@ export function Home() {
         </div>
         <ErrorAlert error={error} />
         {noSession && <div className="alert info" style={{ marginBottom: 14 }}>The Ministry hasn't opened an academic session yet, so classes can't be created. You can still enrol students.</div>}
+        {!!stats?.scoresAwaitingApproval && (
+          <div className="alert info" style={{ marginBottom: 14 }}>
+            <b>{stats.scoresAwaitingApproval}</b> score sheet{stats.scoresAwaitingApproval === 1 ? ' is' : 's are'} waiting for your approval. <Link to="/results">Review results</Link>
+          </div>
+        )}
         {!!stats?.pendingTransfersIn && (
           <div className="alert info" style={{ marginBottom: 14 }}>
             <b>{stats.pendingTransfersIn}</b> student{stats.pendingTransfersIn === 1 ? ' is' : 's are'} waiting to transfer into your school. <Link to="/transfers">Review transfers</Link>
@@ -262,7 +310,7 @@ export function Home() {
           <Kpi label="Transfers waiting" value={stats?.pendingTransfersIn ?? '–'} to="/transfers" />
         </div>
         <TodayAttendance a={stats?.attendanceToday} />
-        <ComingNext items={['Score entry, results approval and submission to the Ministry', 'Report cards', 'Absence SMS to parents']} />
+        <ComingNext items={['Absence and results SMS to parents', 'Teacher registry and postings', 'Offline score entry on the mobile app']} />
       </>
     );
   }
@@ -275,11 +323,11 @@ export function Home() {
           <p>{ROLE_LABEL[user.role]}{user.school && user.role === 'TEACHER' ? ` · ${user.school.name}` : ''}</p>
         </div>
       </div>
-      {user.role === 'TEACHER' ? <TeacherHome /> : <ParentHome />}
+      {user.role === 'TEACHER' ? <><TeacherHome /><TeacherSubjects /></> : <ParentHome />}
       <ComingNext
         items={user.role === 'TEACHER'
-          ? ['Score entry (web and mobile app, works offline)', 'Report cards', 'Offline register on the mobile app']
-          : ['Results and report cards', 'Absence SMS', 'Announcements']}
+          ? ['Offline score entry and register on the mobile app', 'Lesson notes', 'Training records']
+          : ['Absence and results SMS', 'Announcements', 'Fee payments for private schools']}
       />
     </>
   );

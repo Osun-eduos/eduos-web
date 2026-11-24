@@ -8,8 +8,16 @@ Part of [Osun EduOS](https://github.com/Osun-eduos/osun-eduos), the open-source 
 
 | Part | Status |
 | --- | --- |
-| `src/`: the web app (React + TypeScript) | **Milestone 3: attendance** |
+| `src/`: the web app (React + TypeScript) | **Milestone 4: results and report cards** |
 | `prototype/`: clickable prototype of every module, sample data | Live at https://osun-eduos.pages.dev |
+
+### Milestone 4: results and report cards
+
+- **Ministry:** set up the three terms of a session with their dates and score split (default CA 1 20, CA 2 20, Exam 60), choose whether report cards show class positions, and see released results by school and by subject.
+- **School administrators:** choose each class's subjects (or add the usual ones in one click) and who teaches them; review, approve or return each subject's scores; add the principal's remarks; release a class's results.
+- **Subject teachers:** enter scores in a grid with live totals and grades, save drafts, and submit for approval. Returned sheets show the reason.
+- **Class teachers:** see the class broadsheet and write a remark for each student.
+- **Parents:** see and print their child's report card once it is released, with grades, averages, position, attendance and remarks.
 
 ### Milestone 3: attendance
 
@@ -35,8 +43,8 @@ Every person has their own account and signs in with an email address or a Niger
 | Ministry administrator | Another Ministry administrator (the first one by the API seed script) | Register schools, create any account, reset passwords, deactivate accounts and schools, see all activity |
 | Ministry officer | Ministry administrator | See all schools and accounts (read only) |
 | School administrator | Ministry administrator | Create teacher and parent accounts for their school, reset their passwords, deactivate them, see their school's activity |
-| Teacher | School administrator | See their class and take its register; scores come next |
-| Parent | School administrator | See their children and their attendance; results and notices come next |
+| Teacher | School administrator | Take the register, enter scores for their subjects, write remarks for their class |
+| Parent | School administrator | See their children's attendance and report cards |
 
 - New accounts get a **temporary password**, shown once to the person who created the account. The new user must choose their own password at first sign-in.
 - Forgotten passwords are reset by the level above, which issues a new temporary password.

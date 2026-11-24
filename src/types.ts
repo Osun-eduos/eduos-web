@@ -184,3 +184,83 @@ export interface AttendanceToday {
   counts: AttendanceCounts;
   rate: number | null;
 }
+
+export interface Component { key: string; label: string; max: number }
+export type SheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'RETURNED';
+
+export interface Term {
+  id: string;
+  number: number;
+  name: string;
+  session: { id: string; name: string };
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  components: Component[];
+  showPositions: boolean;
+}
+
+export interface ClassSubjectRow {
+  id: string;
+  code: string;
+  name: string;
+  teacher: { id: string; fullName: string } | null;
+  sheet: { id: string; status: SheetStatus } | null;
+}
+
+export interface MySubjects {
+  term: { id: string; name: string; session: string } | null;
+  subjects: { id: string; code: string; name: string; class: { id: string; name: string }; students: number; sheet: { id: string; status: SheetStatus; returnNote: string | null } | null }[];
+}
+
+export interface ScoreSheet {
+  id: string | null;
+  classSubject: { id: string; code: string; name: string; teacher: { id: string; fullName: string } | null };
+  class: { id: string; name: string; level: ClassLevel; school: { id: string; name: string } };
+  term: { id: string; name: string; session: string; isCurrent: boolean; components: Component[] };
+  status: SheetStatus;
+  returnNote: string | null;
+  submitted: { by: string | null; at: string } | null;
+  decided: { by: string | null; at: string } | null;
+  editable: boolean;
+  lockedReason: string | null;
+  released: boolean;
+  students: { id: string; learnerId: string; fullName: string; inClass: boolean; marks: Record<string, number | null>; total: number | null; grade: string | null }[];
+  summary: { students: number; complete: number; average: number | null; highest: number | null; lowest: number | null };
+}
+
+export interface ClassResults {
+  class: { id: string; name: string; level: ClassLevel; school: { id: string; name: string }; classTeacher: { id: string; fullName: string } | null };
+  term: { id: string; name: string; session: string; isCurrent: boolean; showPositions: boolean };
+  released: { by: string; at: string } | null;
+  canRelease: boolean;
+  blockers: string[];
+  canEditTeacherRemarks: boolean;
+  canEditPrincipalRemarks: boolean;
+  subjects: { classSubjectId: string; code: string; name: string; teacher: { id: string; fullName: string } | null; sheetId: string | null; status: SheetStatus | null; entered: number; average: number | null }[];
+  students: { id: string; learnerId: string; fullName: string; totals: Record<string, number | null>; total: number | null; subjects: number; average: number | null; position: number | null; teacherRemark: string | null; principalRemark: string | null }[];
+}
+
+export interface ReportCard {
+  released: boolean;
+  student: { id: string; learnerId: string; fullName: string; sex: Sex; dateOfBirth: string; admissionNumber: string | null };
+  school: { id: string; name: string; code: string; lga: string; address: string | null };
+  class: { id: string; name: string; classTeacher: string | null; students: number };
+  term: { id: string; name: string; session: string; startDate: string; endDate: string; components: Component[]; showPositions: boolean };
+  subjects: { code: string; name: string; marks: Record<string, number | null>; total: number | null; grade: string | null; remark: string | null; classAverage: number | null; highest: number | null; lowest: number | null; position: number | null }[];
+  summary: { subjects: number; total: number | null; average: number | null; position: string | null; outOf: number; classAverage: number | null };
+  attendance: AttendanceCounts & { marked: number; rate: number | null };
+  remarks: { teacher: string | null; principal: string | null };
+  gradingScale: { min: number; grade: string; remark: string }[];
+  nextTermBegins: string | null;
+}
+
+export interface ReportCardTerm { termId: string; name: string; session: string; className: string; released: boolean }
+
+export interface ResultsSummary {
+  term: { id: string; name: string; session: string };
+  passMark: number;
+  creditMark: number;
+  schools: { id: string; name: string; lga: string; classesReleased: number; students: number; entries: number; average: number | null; passRate: number | null; creditRate: number | null }[];
+  subjects: { code: string; name: string; entries: number; average: number | null; passRate: number | null; creditRate: number | null }[];
+}

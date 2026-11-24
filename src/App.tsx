@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
-import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeStudents, isMinistry } from './roles';
+import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeResults, canSeeStudents, isMinistry } from './roles';
 import type { Role } from './types';
 import { Accounts } from './pages/Accounts';
 import { Activity } from './pages/Activity';
@@ -19,6 +19,13 @@ import { EnrolStudent } from './pages/EnrolStudent';
 import { StudentRecord } from './pages/StudentRecord';
 import { Transfers } from './pages/Transfers';
 import { Attendance } from './pages/Attendance';
+import { ClassSubjects } from './pages/ClassSubjects';
+import { MyScores, ScoreSheetPage } from './pages/Scores';
+import { ClassResultsPage, Results } from './pages/Results';
+import { ReportCard } from './pages/ReportCard';
+
+const isTeacher = (r: Role) => r === 'TEACHER';
+const canEnterScores = (r: Role) => r === 'TEACHER' || r === 'SCHOOL_ADMIN';
 
 const isSchoolAdmin = (r: Role) => r === 'SCHOOL_ADMIN';
 
@@ -50,6 +57,12 @@ export function App() {
         <Route path="students/:id" element={<StudentRecord />} />
         <Route path="transfers" element={<RequireAuth allow={canSeeStudents}><Transfers /></RequireAuth>} />
         <Route path="attendance" element={<RequireAuth allow={canSeeAttendance}><Attendance /></RequireAuth>} />
+        <Route path="classes/:id/subjects" element={<RequireAuth allow={isSchoolAdmin}><ClassSubjects /></RequireAuth>} />
+        <Route path="scores" element={<RequireAuth allow={isTeacher}><MyScores /></RequireAuth>} />
+        <Route path="scores/:classSubjectId" element={<RequireAuth allow={canEnterScores}><ScoreSheetPage /></RequireAuth>} />
+        <Route path="results" element={<RequireAuth allow={canSeeResults}><Results /></RequireAuth>} />
+        <Route path="results/:classId" element={<RequireAuth allow={canSeeResults}><ClassResultsPage /></RequireAuth>} />
+        <Route path="report-card/:studentId" element={<ReportCard />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
+import { TermsPanel } from '../components/TermsPanel';
 import { ErrorAlert, Field, formatDay } from '../components/ui';
 import type { AcademicSession } from '../types';
 
@@ -54,7 +55,7 @@ export function Sessions() {
     <>
       <div className="head">
         <div>
-          <h1>Academic sessions</h1>
+          <h1>Sessions and terms</h1>
           <p>Schools set up classes and place students in the current session. Changing the current session starts every school on a fresh set of classes.</p>
         </div>
       </div>
@@ -112,6 +113,7 @@ export function Sessions() {
           </div>
         )}
       </div>
+      {sessions.filter((s) => s.isCurrent).map((s) => <TermsPanel key={s.id} session={s} admin={admin} />)}
     </>
   );
 }

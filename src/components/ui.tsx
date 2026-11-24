@@ -130,3 +130,21 @@ export function formatWeekday(iso: string) {
 }
 
 export const pct = (n: number | null) => (n === null ? '–' : `${n}%`);
+
+const SHEET_PILL: Record<string, [string, string]> = {
+  DRAFT: ['p-mut', 'Draft'],
+  SUBMITTED: ['p-warn', 'Awaiting approval'],
+  APPROVED: ['p-good', 'Approved'],
+  RETURNED: ['p-bad', 'Returned'],
+};
+
+export function SheetPill({ status }: { status: string | null | undefined }) {
+  const [c, l] = status ? SHEET_PILL[status] ?? ['p-mut', status] : ['p-mut', 'Not started'];
+  return <span className={`pill ${c}`}>{l}</span>;
+}
+
+export const ordinal = (n: number) => {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+};

@@ -6,6 +6,7 @@ import { CredentialsPanel, ErrorAlert, Field, formatDay, formatPhone, TransferPi
 import { ageFrom, SEX_LABEL } from '../roles';
 import type { ClassArm, NewCredentials, SchoolRef, StudentRecord as Rec } from '../types';
 import { AttendanceCard } from '../components/AttendanceCard';
+import { ReportCardsCard } from '../components/ReportCardsCard';
 import { GuardianFields, guardianPayload, guardianProblem } from './EnrolStudent';
 
 function EditDetails({ s, onSaved, onCancel }: { s: Rec; onSaved: (r: Rec) => void; onCancel: () => void }) {
@@ -199,6 +200,8 @@ export function StudentRecord() {
         </div>
 
         <AttendanceCard studentId={s.id} />
+
+        <ReportCardsCard studentId={s.id} />
 
         <div className="card">
           <h2>Schools attended</h2>

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2026-11-24
+
+### Added
+- Terms on the Sessions page, with score split and positions setting.
+- Class subjects page, score entry grid, approval and return, class results with broadsheet, remarks and release.
+- Printable report card (A4), report cards on the student record, and the Ministry results summary.
+- Home screens show the current term, scores waiting for approval, a teacher's subjects and a parent's latest report card.
+
 ## [0.4.0] - 2026-11-24
 
 ### Added
