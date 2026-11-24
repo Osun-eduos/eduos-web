@@ -44,3 +44,6 @@ export function ageFrom(dob: string) {
 }
 
 export const canSeeStudents = (r: Role) => r !== 'PARENT' && r !== 'TEACHER';
+
+export const canTakeAttendance = (r: Role) => r === 'TEACHER' || r === 'SCHOOL_ADMIN';
+export const canSeeAttendance = (r: Role) => r !== 'PARENT';

@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { CredentialsPanel, ErrorAlert, Field, formatDay, formatPhone, TransferPill } from '../components/ui';
 import { ageFrom, SEX_LABEL } from '../roles';
 import type { ClassArm, NewCredentials, SchoolRef, StudentRecord as Rec } from '../types';
+import { AttendanceCard } from '../components/AttendanceCard';
 import { GuardianFields, guardianPayload, guardianProblem } from './EnrolStudent';
 
 function EditDetails({ s, onSaved, onCancel }: { s: Rec; onSaved: (r: Rec) => void; onCancel: () => void }) {
@@ -196,6 +197,8 @@ export function StudentRecord() {
             </form>
           )}
         </div>
+
+        <AttendanceCard studentId={s.id} />
 
         <div className="card">
           <h2>Schools attended</h2>

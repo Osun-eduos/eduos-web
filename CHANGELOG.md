@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0] - 2026-11-24
+
+### Added
+- Attendance screen: daily register with present, late, absent and excused buttons, notes and "mark the rest present"; school day overview; class attendance summary.
+- Attendance card on the student record, today's register status on the teacher's home screen, attendance today on school and Ministry home screens, and each child's attendance on the parent's home screen.
+
 ## [0.3.0] - 2026-11-24
 
 ### Added

@@ -94,3 +94,39 @@ export function TransferPill({ status }: { status: string }) {
   const [c, l] = TRANSFER_PILL[status] ?? ['p-mut', status];
   return <span className={`pill ${c}`}>{l}</span>;
 }
+
+export const ATTENDANCE: Record<string, { label: string; short: string; pill: string }> = {
+  PRESENT: { label: 'Present', short: 'P', pill: 'p-good' },
+  LATE: { label: 'Late', short: 'L', pill: 'p-warn' },
+  ABSENT: { label: 'Absent', short: 'A', pill: 'p-bad' },
+  EXCUSED: { label: 'Excused', short: 'E', pill: 'p-ind' },
+};
+
+export function AttendancePill({ status }: { status: string }) {
+  const a = ATTENDANCE[status];
+  return <span className={`pill ${a?.pill ?? 'p-mut'}`}>{a?.label ?? status}</span>;
+}
+
+/** Today's date in Nigeria (UTC+1), as YYYY-MM-DD. */
+export const todayNG = () => new Date(Date.now() + 3_600_000).toISOString().slice(0, 10);
+
+/** The school day (Monday to Friday) before or after a date. */
+export function shiftSchoolDay(iso: string, dir: 1 | -1) {
+  let d = new Date(iso + 'T00:00:00Z');
+  do d = new Date(d.getTime() + dir * 86_400_000);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d.toISOString().slice(0, 10);
+}
+
+/** The most recent school day on or before today. */
+export function latestSchoolDay() {
+  const t = todayNG();
+  const day = new Date(t + 'T00:00:00Z').getUTCDay();
+  return day === 0 || day === 6 ? shiftSchoolDay(t, -1) : t;
+}
+
+export function formatWeekday(iso: string) {
+  return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+export const pct = (n: number | null) => (n === null ? '–' : `${n}%`);

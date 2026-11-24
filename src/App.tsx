@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
-import { canSeeAccounts, canSeeActivity, canSeeStudents, isMinistry } from './roles';
+import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeStudents, isMinistry } from './roles';
 import type { Role } from './types';
 import { Accounts } from './pages/Accounts';
 import { Activity } from './pages/Activity';
@@ -18,6 +18,7 @@ import { Students } from './pages/Students';
 import { EnrolStudent } from './pages/EnrolStudent';
 import { StudentRecord } from './pages/StudentRecord';
 import { Transfers } from './pages/Transfers';
+import { Attendance } from './pages/Attendance';
 
 const isSchoolAdmin = (r: Role) => r === 'SCHOOL_ADMIN';
 
@@ -48,6 +49,7 @@ export function App() {
         <Route path="students/new" element={<RequireAuth allow={isSchoolAdmin}><EnrolStudent /></RequireAuth>} />
         <Route path="students/:id" element={<StudentRecord />} />
         <Route path="transfers" element={<RequireAuth allow={canSeeStudents}><Transfers /></RequireAuth>} />
+        <Route path="attendance" element={<RequireAuth allow={canSeeAttendance}><Attendance /></RequireAuth>} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

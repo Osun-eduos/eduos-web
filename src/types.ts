@@ -128,3 +128,59 @@ export interface SchoolRef {
   code: string;
   lga: string;
 }
+
+export type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
+export type AttendanceCounts = Record<AttendanceStatus, number>;
+
+export interface Register {
+  class: { id: string; name: string; school: { id: string; name: string }; classTeacher: { id: string; fullName: string } | null; session: string };
+  date: string;
+  editable: boolean;
+  lockedReason: string | null;
+  register: { takenBy: string; takenAt: string; updatedBy: string | null; updatedAt: string | null } | null;
+  students: { id: string; learnerId: string; fullName: string; sex: Sex; status: AttendanceStatus | null; note: string | null; inClass: boolean }[];
+  totals: AttendanceCounts;
+}
+
+export interface AttendanceDay {
+  date: string;
+  session: string | null;
+  isSchoolDay: boolean;
+  classes: {
+    id: string;
+    name: string;
+    classTeacher: { id: string; fullName: string } | null;
+    students: number;
+    taken: boolean;
+    takenBy: string | null;
+    takenAt: string | null;
+    counts: AttendanceCounts | null;
+  }[];
+  totals: AttendanceCounts & { classes: number; taken: number };
+}
+
+export interface ClassAttendance {
+  class: { id: string; name: string; session: string };
+  from: string;
+  to: string;
+  registers: number;
+  students: { id: string; learnerId: string; fullName: string; inClass: boolean; counts: AttendanceCounts; rate: number | null }[];
+  days: (AttendanceCounts & { date: string })[];
+}
+
+export interface StudentAttendance {
+  from: string | null;
+  to: string | null;
+  counts: AttendanceCounts;
+  rate: number | null;
+  records: { date: string; status: AttendanceStatus; note: string | null; className: string; school: string }[];
+}
+
+export interface AttendanceToday {
+  date: string;
+  isSchoolDay: boolean;
+  classes: number;
+  taken: number;
+  counts: AttendanceCounts;
+  rate: number | null;
+}

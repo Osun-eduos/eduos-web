@@ -130,3 +130,19 @@ select.inline, input.inline { border: 1px solid var(--line); background: var(--s
 .kv dd { margin: 0; }
 .child { display: grid; gap: 4px; }
 .child > b { font-family: var(--display); font-size: 1.1rem; }
+
+/* Attendance register */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-left: 1px solid var(--line); background: var(--surface); padding: 6px 11px; cursor: pointer; font-weight: 600; font-size: 0.82rem; color: var(--muted); min-width: 40px; }
+.seg button:first-child { border-left: 0; }
+.seg button:disabled { cursor: default; }
+.seg button[aria-pressed="true"].PRESENT { background: var(--good-soft); color: var(--good); }
+.seg button[aria-pressed="true"].LATE { background: var(--warn-soft); color: var(--warn); }
+.seg button[aria-pressed="true"].ABSENT { background: var(--bad-soft); color: var(--bad); }
+.seg button[aria-pressed="true"].EXCUSED { background: var(--indigo-soft); color: var(--indigo); }
+.savebar { position: sticky; bottom: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; box-shadow: 0 -6px 20px rgba(20, 26, 60, 0.06); }
+.datebar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.datebar input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 8px; }
+tr.unmarked td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+@media (max-width: 600px) { .seg button { min-width: 34px; padding: 6px 8px; } }
+.nowrap { white-space: nowrap; }

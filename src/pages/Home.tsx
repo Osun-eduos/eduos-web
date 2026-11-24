@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { ErrorAlert, formatPhone } from '../components/ui';
+import { ErrorAlert, formatDay, formatPhone, pct } from '../components/ui';
 import { ageFrom, ROLE_LABEL } from '../roles';
-import type { Role, StudentSummary } from '../types';
+import type { AttendanceToday, Role, StudentAttendance, StudentSummary } from '../types';
 
 interface Stats {
   accountsByRole: Record<Role, number>;
@@ -15,6 +15,7 @@ interface Stats {
   classes: number;
   session: string | null;
   pendingTransfersIn: number;
+  attendanceToday: AttendanceToday | null;
 }
 
 interface MyClasses {
@@ -23,6 +24,7 @@ interface MyClasses {
     id: string;
     name: string;
     capacity: number;
+    registerTakenToday: boolean;
     students: (StudentSummary & { guardians: { relationship: string; fullName: string; phone: string | null; email: string | null }[] })[];
   }[];
 }
@@ -38,6 +40,29 @@ function Kpi({ label, value, note, to }: { label: string; value: number | string
     </>
   );
   return to ? <Link className="card kpi" to={to} style={{ textDecoration: 'none', color: 'inherit' }}>{body}</Link> : <div className="card kpi">{body}</div>;
+}
+
+function TodayAttendance({ a, ministry }: { a: AttendanceToday | null | undefined; ministry?: boolean }) {
+  if (!a) return null;
+  const marked = a.counts.PRESENT + a.counts.LATE + a.counts.ABSENT + a.counts.EXCUSED;
+  return (
+    <div className="card mt">
+      <div className="row between">
+        <h2>Attendance today</h2>
+        <Link className="btn sm" to="/attendance">{ministry ? 'Registers by school' : 'See registers'}</Link>
+      </div>
+      {!a.isSchoolDay ? (
+        <p className="muted">Today is not a school day.</p>
+      ) : (
+        <div className="grid g4 mt">
+          <div className="kpi"><div className="k">Registers taken</div><div className="v">{a.taken} / {a.classes}</div>{a.classes > a.taken && <div className="small muted">{a.classes - a.taken} class{a.classes - a.taken === 1 ? '' : 'es'} still to take it</div>}</div>
+          <div className="kpi"><div className="k">In school</div><div className="v">{pct(a.rate)}</div><div className="small muted">of {marked} students marked</div></div>
+          <div className="kpi"><div className="k">Absent</div><div className="v">{a.counts.ABSENT}</div><div className="small muted">{a.counts.EXCUSED} more excused</div></div>
+          <div className="kpi"><div className="k">Late</div><div className="v">{a.counts.LATE}</div></div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ComingNext({ items }: { items: string[] }) {
@@ -73,6 +98,12 @@ function TeacherHome() {
             <h2>{c.name}</h2>
             <span className="small muted">{data.session} · {c.students.length}/{c.capacity} students</span>
           </div>
+          {c.students.length > 0 && (
+            <div className={`alert ${c.registerTakenToday ? 'ok' : 'info'} row between`} style={{ margin: '10px 0' }}>
+              <span>{c.registerTakenToday ? "Today's register is taken." : "Today's register has not been taken yet."}</span>
+              <Link className={`btn sm${c.registerTakenToday ? '' : ' pri'}`} to={`/attendance?class=${c.id}`}>{c.registerTakenToday ? 'Open register' : 'Take register'}</Link>
+            </div>
+          )}
           <div className="tbl">
             <table>
               <thead><tr><th>Name</th><th>Learner ID</th><th>Sex</th><th>Age</th><th>Parent</th></tr></thead>
@@ -95,6 +126,21 @@ function TeacherHome() {
         </div>
       ))}
     </>
+  );
+}
+
+function ChildAttendance({ id }: { id: string }) {
+  const [a, setA] = useState<StudentAttendance | null>(null);
+  useEffect(() => {
+    api<StudentAttendance>(`/attendance/students/${id}`).then(setA).catch(() => {});
+  }, [id]);
+  if (!a || a.rate === null) return null;
+  const lastAbsent = a.records.find((r) => r.status === 'ABSENT');
+  return (
+    <span className="small">
+      Attendance this session <b>{pct(a.rate)}</b>
+      {lastAbsent ? <> · last absent {formatDay(lastAbsent.date)}</> : <> · no absences</>}
+    </span>
   );
 }
 
@@ -121,6 +167,7 @@ function ParentHome() {
           <span className="small muted">You're listed as {k.relationship.toLowerCase()} · <span className="mono">{k.learnerId}</span></span>
           <span>{k.school?.name ?? 'Not enrolled in a school'}</span>
           <span>{k.currentClass ? <>Class <b>{k.currentClass.name}</b>{k.classTeacher && <> · class teacher {k.classTeacher}</>}</> : <span className="pill p-warn">No class yet</span>}</span>
+          <ChildAttendance id={k.id} />
         </Link>
       ))}
     </div>
@@ -176,7 +223,8 @@ export function Home() {
           <Kpi label="Parents" value={c?.PARENT ?? '–'} />
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} note="Accounts on a temporary password" />
         </div>
-        <ComingNext items={['Attendance register', 'Score entry, results and report cards', 'State dashboard and LGA comparison']} />
+        <TodayAttendance a={stats?.attendanceToday} ministry />
+        <ComingNext items={['Score entry, results and report cards', 'State dashboard and LGA comparison', 'Absence SMS to parents']} />
       </>
     );
   }
@@ -213,7 +261,8 @@ export function Home() {
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} />
           <Kpi label="Transfers waiting" value={stats?.pendingTransfersIn ?? '–'} to="/transfers" />
         </div>
-        <ComingNext items={['Attendance register', 'Results approval and submission to the Ministry', 'Report cards']} />
+        <TodayAttendance a={stats?.attendanceToday} />
+        <ComingNext items={['Score entry, results approval and submission to the Ministry', 'Report cards', 'Absence SMS to parents']} />
       </>
     );
   }
@@ -229,8 +278,8 @@ export function Home() {
       {user.role === 'TEACHER' ? <TeacherHome /> : <ParentHome />}
       <ComingNext
         items={user.role === 'TEACHER'
-          ? ['Attendance register', 'Score entry (web and mobile app, works offline)', 'Report cards']
-          : ['Results and report cards', 'Attendance', 'Announcements and SMS notifications']}
+          ? ['Score entry (web and mobile app, works offline)', 'Report cards', 'Offline register on the mobile app']
+          : ['Results and report cards', 'Absence SMS', 'Announcements']}
       />
     </>
   );

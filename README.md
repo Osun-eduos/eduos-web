@@ -8,8 +8,15 @@ Part of [Osun EduOS](https://github.com/Osun-eduos/osun-eduos), the open-source 
 
 | Part | Status |
 | --- | --- |
-| `src/`: the web app (React + TypeScript) | **Milestone 2: students and classes** |
+| `src/`: the web app (React + TypeScript) | **Milestone 3: attendance** |
 | `prototype/`: clickable prototype of every module, sample data | Live at https://osun-eduos.pages.dev |
+
+### Milestone 3: attendance
+
+- **Teachers:** take the daily register for their class with one tap per student (present, late, absent, excused), add a reason, and correct registers from the last 7 days. Works on a phone.
+- **School administrators:** see which classes have taken today's register and how many students are in school, open any register and correct it.
+- **Ministry:** see any school's registers and today's attendance across the state.
+- **Parents:** see their child's attendance rate and the days they were absent or late.
 
 ### Milestone 2: students and classes
 
@@ -28,8 +35,8 @@ Every person has their own account and signs in with an email address or a Niger
 | Ministry administrator | Another Ministry administrator (the first one by the API seed script) | Register schools, create any account, reset passwords, deactivate accounts and schools, see all activity |
 | Ministry officer | Ministry administrator | See all schools and accounts (read only) |
 | School administrator | Ministry administrator | Create teacher and parent accounts for their school, reset their passwords, deactivate them, see their school's activity |
-| Teacher | School administrator | See their class; scores and attendance come in the next milestones |
-| Parent | School administrator | See their children; results, attendance and notices come in the next milestones |
+| Teacher | School administrator | See their class and take its register; scores come next |
+| Parent | School administrator | See their children and their attendance; results and notices come next |
 
 - New accounts get a **temporary password**, shown once to the person who created the account. The new user must choose their own password at first sign-in.
 - Forgotten passwords are reset by the level above, which issues a new temporary password.
