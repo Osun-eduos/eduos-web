@@ -1,7 +1,7 @@
 const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api';
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public code?: string) {
+  constructor(public status: number, message: string, public code?: string, public body?: unknown) {
     super(message);
   }
 }
@@ -53,7 +53,7 @@ export async function rawRequest<T>(path: string, init: RequestInit = {}): Promi
   const body = await parse(res);
   if (!res.ok) {
     const { message, code } = messageFrom(body, res.status);
-    throw new ApiError(res.status, message, code);
+    throw new ApiError(res.status, message, code, body);
   }
   return body as T;
 }

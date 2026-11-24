@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0] - 2026-11-24
+
+### Added
+- Academic sessions screen for the Ministry.
+- Classes screen for school administrators: create classes, set capacity and class teacher, see how full each class is.
+- Students list with search and class filters, enrolment form with parent account creation and duplicate warning, and the student record (details, class, parents, schools attended, transfers).
+- Transfers screen: accept into a class or decline incoming students, cancel outgoing requests, history.
+- Home screens show student, class and transfer counts; teachers see their class and parents see their children.
+
 ## [0.2.0] - 2026-11-24
 
 ### Added

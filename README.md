@@ -8,8 +8,16 @@ Part of [Osun EduOS](https://github.com/Osun-eduos/osun-eduos), the open-source 
 
 | Part | Status |
 | --- | --- |
-| `src/`: the web app (React + TypeScript) | **Milestone 1: accounts and sign-in** |
+| `src/`: the web app (React + TypeScript) | **Milestone 2: students and classes** |
 | `prototype/`: clickable prototype of every module, sample data | Live at https://osun-eduos.pages.dev |
+
+### Milestone 2: students and classes
+
+- **Ministry:** open academic sessions and choose the current one; search any student in the state; see every transfer.
+- **School administrators:** create classes (`JSS 2A`) with a capacity and class teacher; enrol students with a parent account; place and move students between classes; transfer students to another Osun school, or accept and decline students coming in; withdraw students.
+- **Teachers:** see the class they teach, with each student's parent contact.
+- **Parents:** see each of their children, their school, class and class teacher.
+- Every student gets an Osun **learner ID** for life. When they change school their record, learner ID and history go with them.
 
 ### Milestone 1: accounts and sign-in
 
@@ -20,8 +28,8 @@ Every person has their own account and signs in with an email address or a Niger
 | Ministry administrator | Another Ministry administrator (the first one by the API seed script) | Register schools, create any account, reset passwords, deactivate accounts and schools, see all activity |
 | Ministry officer | Ministry administrator | See all schools and accounts (read only) |
 | School administrator | Ministry administrator | Create teacher and parent accounts for their school, reset their passwords, deactivate them, see their school's activity |
-| Teacher | School administrator | Sign in; classes, scores and attendance come in the next milestones |
-| Parent | School administrator | Sign in; results, attendance and notices come in the next milestones |
+| Teacher | School administrator | See their class; scores and attendance come in the next milestones |
+| Parent | School administrator | See their children; results, attendance and notices come in the next milestones |
 
 - New accounts get a **temporary password**, shown once to the person who created the account. The new user must choose their own password at first sign-in.
 - Forgotten passwords are reset by the level above, which issues a new temporary password.

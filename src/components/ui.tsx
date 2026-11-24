@@ -77,3 +77,20 @@ export function CredentialsPanel({ creds, onDone, reset }: { creds: NewCredentia
     </div>
   );
 }
+
+export function formatDay(iso: string | null) {
+  if (!iso) return '–';
+  return new Date(iso.length === 10 ? iso + 'T00:00:00Z' : iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
+const TRANSFER_PILL: Record<string, [string, string]> = {
+  REQUESTED: ['p-warn', 'Awaiting decision'],
+  ACCEPTED: ['p-good', 'Accepted'],
+  REJECTED: ['p-bad', 'Declined'],
+  CANCELLED: ['p-mut', 'Cancelled'],
+};
+
+export function TransferPill({ status }: { status: string }) {
+  const [c, l] = TRANSFER_PILL[status] ?? ['p-mut', status];
+  return <span className={`pill ${c}`}>{l}</span>;
+}
