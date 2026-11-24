@@ -1,33 +1,55 @@
-# Deploying the prototype
+# Deployment
 
-The prototype is static: everything is in `site/`. Any static web host works.
+This repository holds two things that deploy separately:
 
-## Cloudflare Pages: dashboard upload
+| What | Folder | Build |
+| --- | --- | --- |
+| The web app | repository root | `npm run build` → `dist/` |
+| The clickable prototype | `prototype/` | none (static HTML) |
 
-1. Zip the **contents** of `site/` so that `index.html` and `_headers` sit at the top level of the zip, not inside a folder.
-2. In Cloudflare, open **Workers & Pages** → **Create** → **Pages** → **Upload assets**.
-3. Name the project (for example `osun-eduos`), upload the zip and choose **Deploy site**.
+## The web app
 
-To update, open the project and choose **Create deployment**, then upload a new zip. The address stays the same.
+The web app needs [eduos-api](https://github.com/Osun-eduos/eduos-api) running somewhere it can reach.
 
-## Cloudflare Pages: automatic deploys from GitHub
+### Same-site hosting
 
-The workflow in `.github/workflows/deploy.yml` publishes `site/` to Cloudflare Pages on every push to `main`. It is skipped until you configure it:
+Sign-in keeps a refresh token in an httpOnly cookie with `SameSite=Strict`. Browsers only send it when the web app and the API are on the same site, for example:
 
-1. In Cloudflare, create an API token with the **Cloudflare Pages: Edit** permission.
-2. In the GitHub repository, open **Settings** → **Secrets and variables** → **Actions** and add:
-   - secret `CLOUDFLARE_API_TOKEN`: the token;
-   - secret `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID;
-   - variable `CLOUDFLARE_PAGES_PROJECT`: the Pages project name, e.g. `osun-eduos`.
-3. Push to `main`, or run the workflow manually from the **Actions** tab.
+- web at `https://eduos.example.gov.ng`, API at `https://api.eduos.example.gov.ng`; or
+- web and API on one domain, with the API under `/api` (a reverse proxy or Cloudflare route).
 
-## GitHub Pages
+`*.pages.dev` addresses are treated as separate sites, so for testing on `pages.dev` put the API behind the same `pages.dev` domain or use a custom domain for both.
 
-Open **Settings** → **Pages**, set **Source** to **GitHub Actions**, and add the suggested **Static HTML** workflow. In that workflow, change the upload step's `path` from `.` to `site`. GitHub Pages ignores the `_headers` file.
+### Build settings
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Output folder | `dist` |
+| Node version | 22 |
+| `VITE_API_URL` | The API address, e.g. `https://api.eduos.example.gov.ng`. Leave unset if the API is at `/api` on the same domain. |
+
+On the API side, set `WEB_ORIGIN` to the web app's address and keep `COOKIE_SECURE=true`.
+
+### Cloudflare Pages
+
+Connect the repository in **Workers & Pages → Create → Pages → Connect to Git**, choose `eduos-web`, and use the build settings above. `public/_redirects` makes deep links such as `/accounts` load the app.
+
+## The prototype
+
+The live demo at https://osun-eduos.pages.dev is the prototype.
+
+**Manual upload:** zip the **contents** of `prototype/` (so `index.html` and `_headers` are at the top level of the zip), then in Cloudflare open the `osun-eduos` Pages project → **Create deployment** and upload the zip.
+
+**Automatic:** `.github/workflows/deploy.yml` publishes `prototype/` on every push to `main` that changes it. It stays off until you add, in **Settings → Secrets and variables → Actions**:
+
+- secret `CLOUDFLARE_API_TOKEN` (a token with **Cloudflare Pages: Edit**);
+- secret `CLOUDFLARE_ACCOUNT_ID`;
+- variable `CLOUDFLARE_PAGES_PROJECT` = `osun-eduos`.
 
 ## Restricting access
 
-A `pages.dev` link is public. To limit the demo to named people, put the project behind **Cloudflare Access** (Zero Trust → Access → Applications) and allow specific email addresses or domains.
+A `pages.dev` link is public. To limit who can open it, put the project behind **Cloudflare Access** (Zero Trust → Access → Applications) and allow specific email addresses or domains.
 
 ## Licence obligation
 

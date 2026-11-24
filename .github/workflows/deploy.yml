@@ -3,7 +3,7 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**"]
+    paths: ["prototype/**"]
   workflow_dispatch:
 
 permissions:
@@ -16,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy site/ to Cloudflare Pages
+      - name: Deploy the prototype to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+          command: pages deploy prototype --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main

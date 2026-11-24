@@ -1,7 +1,11 @@
 .DS_Store
 Thumbs.db
 node_modules/
+dist/
+*.tsbuildinfo
 .wrangler/
 .env
+.env.*
+!.env.example
 *.log
 *.zip
