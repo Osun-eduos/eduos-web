@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.1] - 2026-11-25
+
+### Added
+- Senior secondary grading setting (WAEC A1 to F9, or A to F) for each term on the Sessions and terms page. Score entry and report cards follow it.
+
 ## [0.5.0] - 2026-11-24
 
 ### Added

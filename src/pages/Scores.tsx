@@ -76,7 +76,7 @@ export function ScoreSheetPage() {
   }, [dirty]);
 
   const components = sheet?.term.components ?? [];
-  const scale = sheet && grading ? (sheet.class.level.startsWith('SSS') ? grading.scales.SSS : grading.scales.BASIC) : null;
+  const scale = sheet && grading ? (sheet.class.level.startsWith('SSS') && sheet.term.sssGrading === 'WAEC' ? grading.scales.SSS : grading.scales.BASIC) : null;
 
   const problem = (key: string, v: string) => {
     if (v.trim() === '') return null;

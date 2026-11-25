@@ -187,6 +187,7 @@ export interface AttendanceToday {
 
 export interface Component { key: string; label: string; max: number }
 export type SheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'RETURNED';
+export type SssGrading = 'WAEC' | 'BASIC';
 
 export interface Term {
   id: string;
@@ -198,6 +199,7 @@ export interface Term {
   isCurrent: boolean;
   components: Component[];
   showPositions: boolean;
+  sssGrading: SssGrading;
 }
 
 export interface ClassSubjectRow {
@@ -217,7 +219,7 @@ export interface ScoreSheet {
   id: string | null;
   classSubject: { id: string; code: string; name: string; teacher: { id: string; fullName: string } | null };
   class: { id: string; name: string; level: ClassLevel; school: { id: string; name: string } };
-  term: { id: string; name: string; session: string; isCurrent: boolean; components: Component[] };
+  term: { id: string; name: string; session: string; isCurrent: boolean; components: Component[]; sssGrading: SssGrading };
   status: SheetStatus;
   returnNote: string | null;
   submitted: { by: string | null; at: string } | null;

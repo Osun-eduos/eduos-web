@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
-import type { AcademicSession, Component, Term } from '../types';
+import type { AcademicSession, Component, SssGrading, Term } from '../types';
 import { ErrorAlert, Field, formatDay } from './ui';
 
 const DEFAULT: Component[] = [
@@ -8,6 +8,8 @@ const DEFAULT: Component[] = [
   { key: 'CA2', label: 'CA 2', max: 20 },
   { key: 'EXAM', label: 'Exam', max: 60 },
 ];
+
+export const SSS_GRADING_LABEL: Record<SssGrading, string> = { WAEC: 'WAEC (A1 to F9)', BASIC: 'A to F' };
 
 const splitText = (c: Component[]) => c.map((x) => `${x.label} ${x.max}`).join(' · ');
 
@@ -20,6 +22,7 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
   const [end, setEnd] = useState('');
   const [components, setComponents] = useState<Component[]>(DEFAULT);
   const [showPositions, setShowPositions] = useState(true);
+  const [sssGrading, setSssGrading] = useState<SssGrading>('WAEC');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -41,7 +44,7 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
     if (total !== 100) return setError(`The score split must add up to 100 (it adds up to ${total}).`);
     setBusy(true);
     try {
-      await api('/terms', { method: 'POST', json: { sessionId: session.id, number, startDate: start, endDate: end, components, showPositions } });
+      await api('/terms', { method: 'POST', json: { sessionId: session.id, number, startDate: start, endDate: end, components, showPositions, sssGrading } });
       setStart('');
       setEnd('');
       load();
@@ -67,11 +70,11 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
   return (
     <div className="card mt">
       <h2>Terms in {session.name}</h2>
-      <p className="small muted" style={{ marginBottom: 10 }}>Teachers enter scores in the current term. The score split can change until scores are entered.</p>
+      <p className="small muted" style={{ marginBottom: 10 }}>Teachers enter scores in the current term. The score split can change until scores are entered; senior secondary grading can change until SSS results are released.</p>
       <ErrorAlert error={error} />
       <div className="tbl">
         <table>
-          <thead><tr><th>Term</th><th>Dates</th><th>Score split</th><th>Positions on report cards</th><th>Status</th><th /></tr></thead>
+          <thead><tr><th>Term</th><th>Dates</th><th>Score split</th><th>Positions on report cards</th><th>Senior secondary grading</th><th>Status</th><th /></tr></thead>
           <tbody>
             {terms.map((t) => (
               <tr key={t.id}>
@@ -86,11 +89,19 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
                     </label>
                   ) : t.showPositions ? 'Shown' : 'Hidden'}
                 </td>
+                <td>
+                  {admin ? (
+                    <select className="inline" aria-label={`Senior secondary grading for ${t.name}`} value={t.sssGrading} onChange={(e) => act(`/terms/${t.id}`, { sssGrading: e.target.value })}>
+                      <option value="WAEC">{SSS_GRADING_LABEL.WAEC}</option>
+                      <option value="BASIC">{SSS_GRADING_LABEL.BASIC}</option>
+                    </select>
+                  ) : SSS_GRADING_LABEL[t.sssGrading]}
+                </td>
                 <td>{t.isCurrent ? <span className="pill p-good">Current</span> : <span className="pill p-mut">Not current</span>}</td>
                 <td style={{ textAlign: 'right' }}>{admin && !t.isCurrent && session.isCurrent && <button className="btn sm" onClick={() => act(`/terms/${t.id}/make-current`)}>Make current</button>}</td>
               </tr>
             ))}
-            {!terms.length && <tr><td colSpan={6} className="muted">No terms yet.</td></tr>}
+            {!terms.length && <tr><td colSpan={7} className="muted">No terms yet.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -119,6 +130,13 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
               <span className={`pill ${total === 100 ? 'p-good' : 'p-bad'}`}>Total {total}</span>
             </div>
           </div>
+          <Field label="Senior secondary grading" hint="Primary and junior secondary always use A to F.">
+            <select id="sssGrading" value={sssGrading} onChange={(e) => setSssGrading(e.target.value as SssGrading)}>
+              <option value="WAEC">WAEC scale: A1, B2, B3, C4 to C6, D7, E8, F9</option>
+              <option value="BASIC">A to F, the same as junior secondary</option>
+            </select>
+          </Field>
+          <span />
           <label className="full row small" style={{ gap: 6 }}>
             <input type="checkbox" checked={showPositions} onChange={(e) => setShowPositions(e.target.checked)} /> Show class positions on report cards
           </label>

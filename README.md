@@ -13,7 +13,7 @@ Part of [Osun EduOS](https://github.com/Osun-eduos/osun-eduos), the open-source 
 
 ### Milestone 4: results and report cards
 
-- **Ministry:** set up the three terms of a session with their dates and score split (default CA 1 20, CA 2 20, Exam 60), choose whether report cards show class positions, and see released results by school and by subject.
+- **Ministry:** set up the three terms of a session with their dates and score split (default CA 1 20, CA 2 20, Exam 60), choose whether report cards show class positions, choose whether senior secondary is graded on the WAEC scale (A1 to F9) or A to F, and see released results by school and by subject.
 - **School administrators:** choose each class's subjects (or add the usual ones in one click) and who teaches them; review, approve or return each subject's scores; add the principal's remarks; release a class's results.
 - **Subject teachers:** enter scores in a grid with live totals and grades, save drafts, and submit for approval. Returned sheets show the reason.
 - **Class teachers:** see the class broadsheet and write a remark for each student.
