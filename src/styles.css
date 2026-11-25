@@ -172,7 +172,13 @@ input.mark[aria-invalid="true"] { border-color: var(--bad); background: var(--ba
   .report-info { grid-template-columns: 1fr 1fr; }
   .report-grid, .report-remarks { grid-template-columns: 1fr; }
 }
+/* Parent sign-in slips from a student import: cut along the dashed lines. */
+.slips { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.slip { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 3px; break-inside: avoid; }
+
 @media print {
+  .slips { grid-template-columns: 1fr 1fr; }
+  .card:has(.slips) { border: 0; padding: 0; }
   :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #444; --line: #999; color-scheme: light; }
   body { background: #fff; font-size: 11px; }
   .side, .noprint { display: none !important; }

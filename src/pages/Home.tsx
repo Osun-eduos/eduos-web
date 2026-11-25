@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { ErrorAlert, formatDay, formatPhone, pct, SheetPill } from '../components/ui';
-import { ageFrom, ROLE_LABEL } from '../roles';
+import { ageFrom, isMinistry, isOversight, ROLE_LABEL } from '../roles';
 import type { AttendanceToday, MySubjects, ReportCardTerm, Role, StudentAttendance, StudentSummary } from '../types';
 
 interface Stats {
@@ -22,6 +22,7 @@ interface Stats {
 
 interface MyClasses {
   session: string | null;
+  today?: { isSchoolDay: boolean; holiday: string | null };
   classes: {
     id: string;
     name: string;
@@ -54,7 +55,7 @@ function TodayAttendance({ a, ministry }: { a: AttendanceToday | null | undefine
         <Link className="btn sm" to="/attendance">{ministry ? 'Registers by school' : 'See registers'}</Link>
       </div>
       {!a.isSchoolDay ? (
-        <p className="muted">Today is not a school day.</p>
+        <p className="muted">{a.holiday ? `Today is a holiday (${a.holiday}). No registers are expected.` : 'Today is not a school day.'}</p>
       ) : (
         <div className="grid g4 mt">
           <div className="kpi"><div className="k">Registers taken</div><div className="v">{a.taken} / {a.classes}</div>{a.classes > a.taken && <div className="small muted">{a.classes - a.taken} class{a.classes - a.taken === 1 ? '' : 'es'} still to take it</div>}</div>
@@ -125,7 +126,10 @@ function TeacherHome() {
             <h2>{c.name}</h2>
             <span className="small muted">{data.session} · {c.students.length}/{c.capacity} students</span>
           </div>
-          {c.students.length > 0 && (
+          {c.students.length > 0 && data.today && !data.today.isSchoolDay && !c.registerTakenToday && (
+            <p className="small muted" style={{ margin: '10px 0' }}>{data.today.holiday ? `Today is a holiday (${data.today.holiday}). No register is needed.` : 'Today is not a school day.'}</p>
+          )}
+          {c.students.length > 0 && (!data.today || data.today.isSchoolDay || c.registerTakenToday) && (
             <div className={`alert ${c.registerTakenToday ? 'ok' : 'info'} row between`} style={{ margin: '10px 0' }}>
               <span>{c.registerTakenToday ? "Today's register is taken." : "Today's register has not been taken yet."}</span>
               <Link className={`btn sm${c.registerTakenToday ? '' : ' pri'}`} to={`/attendance?class=${c.id}`}>{c.registerTakenToday ? 'Open register' : 'Take register'}</Link>
@@ -216,7 +220,7 @@ export function Home() {
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const manages = user && ['MINISTRY_ADMIN', 'MINISTRY_OFFICER', 'SCHOOL_ADMIN'].includes(user.role);
+  const manages = user && (isOversight(user.role) || user.role === 'SCHOOL_ADMIN');
 
   useEffect(() => {
     if (!manages) return;
@@ -228,13 +232,15 @@ export function Home() {
   const c = stats?.accountsByRole;
   const noSession = stats && !stats.session;
 
-  if (user.role === 'MINISTRY_ADMIN' || user.role === 'MINISTRY_OFFICER') {
+  if (isOversight(user.role)) {
+    const area = user.lga ? `${user.lga} LGA` : user.role === 'INSPECTOR' ? 'State-wide' : 'Ministry of Education';
+    const staffCounts = isMinistry(user.role);
     return (
       <>
         <div className="head">
           <div>
             <h1>Good day, {first}</h1>
-            <p>Ministry of Education · {ROLE_LABEL[user.role]}{stats?.term ? ` · ${stats.term.name}, ${stats.term.session}` : stats?.session ? ` · ${stats.session} session` : ''}</p>
+            <p>{area} · {ROLE_LABEL[user.role]}{stats?.term ? ` · ${stats.term.name}, ${stats.term.session}` : stats?.session ? ` · ${stats.session} session` : ''}</p>
           </div>
           {user.role === 'MINISTRY_ADMIN' && (
             <div className="row">
@@ -255,17 +261,17 @@ export function Home() {
           </div>
         )}
         <div className="grid g4">
-          <Kpi label="Registered schools" value={stats?.schools ?? '–'} to="/schools" />
+          <Kpi label={user.lga ? `Schools in ${user.lga}` : 'Registered schools'} value={stats?.schools ?? '–'} to="/schools" />
           <Kpi label="Students enrolled" value={stats?.students ?? '–'} to="/students" />
           <Kpi label="Classes this session" value={stats?.classes ?? '–'} />
           <Kpi label="Not yet in a class" value={stats?.unplaced ?? '–'} />
         </div>
-        <div className="grid g4 mt">
+        {staffCounts && <div className="grid g4 mt">
           <Kpi label="School administrators" value={c?.SCHOOL_ADMIN ?? '–'} />
           <Kpi label="Teachers" value={c?.TEACHER ?? '–'} />
           <Kpi label="Parents" value={c?.PARENT ?? '–'} />
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} note="Accounts on a temporary password" />
-        </div>
+        </div>}
         <TodayAttendance a={stats?.attendanceToday} ministry />
         <ComingNext items={['State dashboard and LGA comparison', 'Teacher registry and postings', 'Absence and results SMS to parents']} />
       </>

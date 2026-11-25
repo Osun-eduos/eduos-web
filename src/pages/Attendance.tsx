@@ -5,7 +5,7 @@ import { useAuth } from '../auth';
 import {
   ATTENDANCE, AttendancePill, ErrorAlert, formatDate, formatDay, formatWeekday, latestSchoolDay, pct, shiftSchoolDay, todayNG,
 } from '../components/ui';
-import { isMinistry } from '../roles';
+import { isOversight } from '../roles';
 import type { AttendanceDay, AttendanceStatus, ClassArm, ClassAttendance, Register, SchoolRef } from '../types';
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'];
@@ -268,7 +268,7 @@ function DayOverview({ schoolId, date, setDate, readOnly }: { schoolId?: string;
         <DateBar date={date} onChange={setDate} />
       </div>
       {!day.session && <div className="alert info" style={{ marginBottom: 12 }}>No academic session is open.</div>}
-      {day.session && !day.isSchoolDay && <div className="alert info" style={{ marginBottom: 12 }}>This is not a school day in the {day.session} session.</div>}
+      {day.session && !day.isSchoolDay && <div className="alert info" style={{ marginBottom: 12 }}>{day.holiday ? <>This is a holiday ({day.holiday}). No registers are expected.</> : <>This is not a school day in the {day.session} session.</>}</div>}
       <div className="grid g4">
         <div className="card kpi"><div className="k">Registers taken</div><div className="v">{t.taken} / {t.classes}</div></div>
         <div className="card kpi"><div className="k">In school</div><div className="v">{t.PRESENT + t.LATE}</div><div className="small muted">{marked ? `${Math.round(((t.PRESENT + t.LATE) / marked) * 1000) / 10}% of students marked` : 'No one marked yet'}</div></div>
@@ -331,7 +331,7 @@ export function Attendance() {
   const view = params.get('view');
   const [schools, setSchools] = useState<SchoolRef[]>([]);
   const [schoolId, setSchoolId] = useState(params.get('school') ?? '');
-  const ministry = !!user && isMinistry(user.role);
+  const ministry = !!user && isOversight(user.role);
 
   useEffect(() => {
     if (ministry) api<SchoolRef[]>('/schools/directory').then(setSchools).catch(() => {});

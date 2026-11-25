@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
-import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeResults, canSeeStudents, isMinistry } from './roles';
+import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeResults, canSeeStudents, isOversight } from './roles';
 import type { Role } from './types';
 import { Accounts } from './pages/Accounts';
 import { Activity } from './pages/Activity';
@@ -15,6 +15,7 @@ import { Schools } from './pages/Schools';
 import { Sessions } from './pages/Sessions';
 import { Classes } from './pages/Classes';
 import { Students } from './pages/Students';
+import { ImportStudents } from './pages/ImportStudents';
 import { EnrolStudent } from './pages/EnrolStudent';
 import { StudentRecord } from './pages/StudentRecord';
 import { Transfers } from './pages/Transfers';
@@ -46,14 +47,15 @@ export function App() {
       <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Home />} />
-        <Route path="schools" element={<RequireAuth allow={isMinistry}><Schools /></RequireAuth>} />
-        <Route path="schools/:id" element={<RequireAuth allow={isMinistry}><SchoolDetail /></RequireAuth>} />
+        <Route path="schools" element={<RequireAuth allow={isOversight}><Schools /></RequireAuth>} />
+        <Route path="schools/:id" element={<RequireAuth allow={isOversight}><SchoolDetail /></RequireAuth>} />
         <Route path="accounts" element={<RequireAuth allow={canSeeAccounts}><Accounts /></RequireAuth>} />
         <Route path="activity" element={<RequireAuth allow={canSeeActivity}><Activity /></RequireAuth>} />
-        <Route path="sessions" element={<RequireAuth allow={isMinistry}><Sessions /></RequireAuth>} />
+        <Route path="sessions" element={<RequireAuth allow={isOversight}><Sessions /></RequireAuth>} />
         <Route path="classes" element={<RequireAuth allow={isSchoolAdmin}><Classes /></RequireAuth>} />
         <Route path="students" element={<RequireAuth allow={canSeeStudents}><Students /></RequireAuth>} />
         <Route path="students/new" element={<RequireAuth allow={isSchoolAdmin}><EnrolStudent /></RequireAuth>} />
+        <Route path="students/import" element={<RequireAuth allow={isSchoolAdmin}><ImportStudents /></RequireAuth>} />
         <Route path="students/:id" element={<StudentRecord />} />
         <Route path="transfers" element={<RequireAuth allow={canSeeStudents}><Transfers /></RequireAuth>} />
         <Route path="attendance" element={<RequireAuth allow={canSeeAttendance}><Attendance /></RequireAuth>} />

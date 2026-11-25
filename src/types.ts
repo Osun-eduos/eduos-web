@@ -1,4 +1,4 @@
-export type Role = 'MINISTRY_ADMIN' | 'MINISTRY_OFFICER' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT';
+export type Role = 'MINISTRY_ADMIN' | 'MINISTRY_OFFICER' | 'LGA_OFFICER' | 'INSPECTOR' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT';
 export type SchoolLevel = 'PRIMARY' | 'JUNIOR_SECONDARY' | 'SENIOR_SECONDARY' | 'JUNIOR_AND_SENIOR';
 export type Ownership = 'PUBLIC' | 'PRIVATE';
 
@@ -10,6 +10,8 @@ export interface User {
   role: Role;
   schoolId: string | null;
   school: { id: string; name: string; code: string } | null;
+  /** LGA education officers and LGA inspectors: the one LGA they oversee. */
+  lga: string | null;
   mustChangePassword: boolean;
   isActive: boolean;
   lockedUntil: string | null;
@@ -146,6 +148,7 @@ export interface AttendanceDay {
   date: string;
   session: string | null;
   isSchoolDay: boolean;
+  holiday: string | null;
   classes: {
     id: string;
     name: string;
@@ -179,6 +182,7 @@ export interface StudentAttendance {
 export interface AttendanceToday {
   date: string;
   isSchoolDay: boolean;
+  holiday: string | null;
   classes: number;
   taken: number;
   counts: AttendanceCounts;
@@ -265,4 +269,11 @@ export interface ResultsSummary {
   creditMark: number;
   schools: { id: string; name: string; lga: string; classesReleased: number; students: number; entries: number; average: number | null; passRate: number | null; creditRate: number | null }[];
   subjects: { code: string; name: string; entries: number; average: number | null; passRate: number | null; creditRate: number | null }[];
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
 }

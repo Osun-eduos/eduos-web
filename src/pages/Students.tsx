@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { ErrorAlert, formatDay } from '../components/ui';
-import { ageFrom, isMinistry } from '../roles';
+import { ageFrom, isOversight } from '../roles';
 import type { ClassArm, SchoolRef, StudentStatus, StudentSummary } from '../types';
 
 export function StudentsTable({ students, showSchool }: { students: StudentSummary[]; showSchool?: boolean }) {
@@ -42,13 +42,13 @@ export function StudentsTable({ students, showSchool }: { students: StudentSumma
 
 export function Students() {
   const { user } = useAuth();
-  const ministry = !!user && isMinistry(user.role);
+  const ministry = !!user && isOversight(user.role);
   const [params, setParams] = useSearchParams();
   const classId = params.get('class') ?? '';
   const unplaced = params.get('unplaced') === '1';
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<StudentStatus>('ACTIVE');
-  const [schoolId, setSchoolId] = useState('');
+  const [schoolId, setSchoolId] = useState(params.get('school') ?? '');
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [classes, setClasses] = useState<ClassArm[]>([]);
   const [schools, setSchools] = useState<SchoolRef[]>([]);
@@ -98,7 +98,12 @@ export function Students() {
               : 'Every student enrolled at your school. Learner IDs stay with a student for life, across schools.'}
           </p>
         </div>
-        {user?.role === 'SCHOOL_ADMIN' && <Link className="btn pri" to="/students/new">Enrol a student</Link>}
+        {user?.role === 'SCHOOL_ADMIN' && (
+          <div className="row">
+            <Link className="btn" to="/students/import">Import from a spreadsheet</Link>
+            <Link className="btn pri" to="/students/new">Enrol a student</Link>
+          </div>
+        )}
       </div>
       <div className="card">
         <div className="row" style={{ marginBottom: 10 }}>

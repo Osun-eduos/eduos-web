@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { CredentialsPanel, ErrorAlert, Field, formatDate, formatPhone, StatusPill } from '../components/ui';
-import { CAN_CREATE, isMinistry, ROLE_LABEL } from '../roles';
+import { CAN_CREATE, isMinistry, LGA_ROLES, ROLE_LABEL } from '../roles';
 import type { NewCredentials, Role, School, User } from '../types';
 
 const SCHOOL_LEVEL_ROLES: Role[] = ['SCHOOL_ADMIN', 'TEACHER', 'PARENT'];
@@ -18,12 +18,18 @@ export function NewAccountForm(props: {
 }) {
   const [role, setRole] = useState<Role>(props.roles[0]);
   const [schoolId, setSchoolId] = useState(props.fixedSchoolId ?? '');
+  const [lga, setLga] = useState('');
+  const [lgas, setLgas] = useState<string[]>([]);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needsSchool = SCHOOL_LEVEL_ROLES.includes(role) && !props.fixedSchoolId && !!props.schools;
+  const hasLga = LGA_ROLES.includes(role);
+  useEffect(() => {
+    if (props.roles.some((r) => LGA_ROLES.includes(r))) api<string[]>('/schools/lgas').then(setLgas).catch(() => {});
+  }, [props.roles]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -31,6 +37,7 @@ export function NewAccountForm(props: {
     if (fullName.trim().length < 3) return setError('Enter the full name.');
     if (!email.trim() && !phone.trim()) return setError('Give an email address or a phone number so they can sign in.');
     if (needsSchool && !schoolId) return setError('Choose the school.');
+    if (role === 'LGA_OFFICER' && !lga) return setError('Choose the LGA this officer oversees.');
     setBusy(true);
     try {
       const res = await api<NewCredentials>('/users', {
@@ -41,6 +48,7 @@ export function NewAccountForm(props: {
           email: email || undefined,
           phone: phone || undefined,
           schoolId: SCHOOL_LEVEL_ROLES.includes(role) ? schoolId || undefined : undefined,
+          lga: hasLga ? lga || undefined : undefined,
         },
       });
       props.onCreated(res);
@@ -67,6 +75,13 @@ export function NewAccountForm(props: {
             {props.schools!.filter((s) => s.isActive).map((s) => (
               <option key={s.id} value={s.id}>{s.name} · {s.code}</option>
             ))}
+          </select>
+        </Field>
+      ) : hasLga ? (
+        <Field label="LGA" hint={role === 'INSPECTOR' ? 'Leave as state-wide for an inspector who covers every LGA' : 'They see only the schools in this LGA'}>
+          <select id="lga" value={lga} onChange={(e) => setLga(e.target.value)}>
+            <option value="">{role === 'INSPECTOR' ? 'State-wide (all LGAs)' : 'Choose LGA'}</option>
+            {lgas.map((l) => <option key={l}>{l}</option>)}
           </select>
         </Field>
       ) : (
@@ -123,7 +138,7 @@ export function AccountsTable({ users, onChanged, showSchool }: { users: User[];
             <tr>
               <th>Name</th>
               <th>Type</th>
-              {showSchool && <th>School</th>}
+              {showSchool && <th>School or area</th>}
               <th>Email</th>
               <th>Phone</th>
               <th>Status</th>
@@ -136,7 +151,7 @@ export function AccountsTable({ users, onChanged, showSchool }: { users: User[];
               <tr key={u.id}>
                 <td>{u.fullName}{u.id === me.id && <span className="muted small"> (you)</span>}</td>
                 <td>{ROLE_LABEL[u.role]}</td>
-                {showSchool && <td>{u.school?.name ?? <span className="muted">Ministry</span>}</td>}
+                {showSchool && <td>{u.school?.name ?? (u.lga ? `${u.lga} LGA` : u.role === 'INSPECTOR' ? <span className="muted">State-wide</span> : <span className="muted">Ministry</span>)}</td>}
                 <td className="mono small">{u.email ?? '–'}</td>
                 <td className="mono small" style={{ whiteSpace: 'nowrap' }}>{formatPhone(u.phone) || '–'}</td>
                 <td><StatusPill user={u} /></td>
@@ -204,7 +219,7 @@ export function Accounts() {
 
   if (!me) return null;
   const creatable = CAN_CREATE[me.role];
-  const roleFilters: Role[] = ministry ? ['MINISTRY_ADMIN', 'MINISTRY_OFFICER', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT'] : ['SCHOOL_ADMIN', 'TEACHER', 'PARENT'];
+  const roleFilters: Role[] = ministry ? ['MINISTRY_ADMIN', 'MINISTRY_OFFICER', 'LGA_OFFICER', 'INSPECTOR', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT'] : ['SCHOOL_ADMIN', 'TEACHER', 'PARENT'];
 
   return (
     <>
@@ -213,7 +228,7 @@ export function Accounts() {
           <h1>Accounts</h1>
           <p>
             {ministry
-              ? 'Every account in the system. Ministry administrators create Ministry and school accounts.'
+              ? 'Every account in the system. Ministry administrators create Ministry, LGA, inspector and school accounts.'
               : `Accounts for ${me.school?.name}. You can add teachers and parents and reset their passwords.`}
           </p>
         </div>

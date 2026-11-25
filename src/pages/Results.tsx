@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { ErrorAlert, formatDate, ordinal, pct, SheetPill } from '../components/ui';
-import { isMinistry } from '../roles';
+import { isOversight } from '../roles';
 import type { ClassArm, ClassResults, ResultsSummary, Term } from '../types';
 
 function MinistrySummary() {
@@ -80,7 +80,7 @@ export function Results() {
   const [classes, setClasses] = useState<ClassArm[] | null>(null);
   const [status, setStatus] = useState<Record<string, ClassResults | null>>({});
   const [error, setError] = useState<string | null>(null);
-  const ministry = !!user && isMinistry(user.role);
+  const ministry = !!user && isOversight(user.role);
 
   useEffect(() => {
     if (ministry) return;
@@ -190,7 +190,7 @@ export function ClassResultsPage() {
 
   return (
     <>
-      {!isMinistry(user!.role) && <p className="small"><Link to="/results">← Results</Link></p>}
+      {!isOversight(user!.role) && <p className="small"><Link to="/results">← Results</Link></p>}
       <div className="head">
         <div>
           <h1>{r.class.name} results</h1>
@@ -239,7 +239,7 @@ export function ClassResultsPage() {
                 <td>{s.entered} of {r.students.length}</td>
                 <td>{s.average ?? '–'}</td>
                 <td><SheetPill status={s.status} /></td>
-                <td style={{ textAlign: 'right' }}>{!isMinistry(user!.role) && <Link className={`btn sm${s.status === 'SUBMITTED' && user?.role === 'SCHOOL_ADMIN' ? ' pri' : ''}`} to={`/scores/${s.classSubjectId}`}>{s.status === 'SUBMITTED' && user?.role === 'SCHOOL_ADMIN' ? 'Review' : 'Open'}</Link>}</td>
+                <td style={{ textAlign: 'right' }}>{!isOversight(user!.role) && <Link className={`btn sm${s.status === 'SUBMITTED' && user?.role === 'SCHOOL_ADMIN' ? ' pri' : ''}`} to={`/scores/${s.classSubjectId}`}>{s.status === 'SUBMITTED' && user?.role === 'SCHOOL_ADMIN' ? 'Review' : 'Open'}</Link>}</td>
               </tr>
             ))}
             {!r.subjects.length && <tr><td colSpan={6} className="muted">No subjects. {user?.role === 'SCHOOL_ADMIN' && <Link to={`/classes/${classId}/subjects`}>Add subjects</Link>}</td></tr>}

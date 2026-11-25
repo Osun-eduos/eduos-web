@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0] - 2026-11-25
+
+### Added
+- Import students from an Excel (.xlsx) or CSV file: a downloadable template, a check of every row before anything is saved, then printable sign-in slips for new parents. Files are read in the browser.
+- Holidays panel on the Sessions page, with "Add national holidays". Attendance and home screens name the holiday instead of asking for registers.
+- LGA education officer and school inspector accounts: created on the Accounts page with their LGA, with read-only screens limited to that LGA.
+
 ## [0.5.1] - 2026-11-25
 
 ### Added

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { CredentialsPanel, ErrorAlert, formatDate } from '../components/ui';
-import { LEVEL_LABEL, ROLE_LABEL } from '../roles';
+import { canSeeAccounts, LEVEL_LABEL, ROLE_LABEL } from '../roles';
 import type { NewCredentials, Role, School, User } from '../types';
 import { AccountsTable, NewAccountForm } from './Accounts';
 
@@ -17,11 +17,12 @@ export function SchoolDetail() {
   const [confirmOff, setConfirmOff] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const admin = me?.role === 'MINISTRY_ADMIN';
+  const seesAccounts = !!me && canSeeAccounts(me.role);
 
   const load = useCallback(() => {
     api<School>(`/schools/${id}`).then(setSchool).catch((e) => setError(e.message));
-    api<User[]>(`/users?schoolId=${id}`).then(setUsers).catch((e) => setError(e.message));
-  }, [id]);
+    if (seesAccounts) api<User[]>(`/users?schoolId=${id}`).then(setUsers).catch((e) => setError(e.message));
+  }, [id, seesAccounts]);
   useEffect(load, [load]);
 
   async function setActive(isActive: boolean) {
@@ -90,10 +91,22 @@ export function SchoolDetail() {
         </div>
       )}
 
-      <div className="card">
-        <h2>Accounts</h2>
-        <AccountsTable users={users} onChanged={load} showSchool={false} />
-      </div>
+      {seesAccounts ? (
+        <div className="card">
+          <h2>Accounts</h2>
+          <AccountsTable users={users} onChanged={load} showSchool={false} />
+        </div>
+      ) : (
+        <div className="card">
+          <h2>This school's records</h2>
+          <p className="muted small" style={{ marginBottom: 10 }}>You have read-only access. Open the school's students, registers and released results:</p>
+          <div className="row">
+            <Link className="btn" to={`/students?school=${school.id}`}>Students</Link>
+            <Link className="btn" to={`/attendance?school=${school.id}`}>Attendance</Link>
+            <Link className="btn" to="/results">Results</Link>
+          </div>
+        </div>
+      )}
     </>
   );
 }

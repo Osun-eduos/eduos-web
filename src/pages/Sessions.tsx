@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
+import { HolidaysPanel } from '../components/HolidaysPanel';
 import { TermsPanel } from '../components/TermsPanel';
 import { ErrorAlert, Field, formatDay } from '../components/ui';
 import type { AcademicSession } from '../types';
@@ -113,7 +114,12 @@ export function Sessions() {
           </div>
         )}
       </div>
-      {sessions.filter((s) => s.isCurrent).map((s) => <TermsPanel key={s.id} session={s} admin={admin} />)}
+      {sessions.filter((s) => s.isCurrent).map((s) => (
+        <div key={s.id}>
+          <TermsPanel session={s} admin={admin} />
+          <HolidaysPanel session={s} admin={admin} />
+        </div>
+      ))}
     </>
   );
 }

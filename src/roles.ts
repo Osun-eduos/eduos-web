@@ -3,6 +3,8 @@ import type { Role, SchoolLevel } from './types';
 export const ROLE_LABEL: Record<Role, string> = {
   MINISTRY_ADMIN: 'Ministry administrator',
   MINISTRY_OFFICER: 'Ministry officer',
+  LGA_OFFICER: 'LGA education officer',
+  INSPECTOR: 'School inspector',
   SCHOOL_ADMIN: 'School administrator',
   TEACHER: 'Teacher',
   PARENT: 'Parent',
@@ -17,14 +19,20 @@ export const LEVEL_LABEL: Record<SchoolLevel, string> = {
 
 /** Which account types each role may create (mirrors the API's rules). */
 export const CAN_CREATE: Record<Role, Role[]> = {
-  MINISTRY_ADMIN: ['MINISTRY_ADMIN', 'MINISTRY_OFFICER', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT'],
+  MINISTRY_ADMIN: ['MINISTRY_ADMIN', 'MINISTRY_OFFICER', 'LGA_OFFICER', 'INSPECTOR', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT'],
   MINISTRY_OFFICER: [],
+  LGA_OFFICER: [],
+  INSPECTOR: [],
   SCHOOL_ADMIN: ['TEACHER', 'PARENT'],
   TEACHER: [],
   PARENT: [],
 };
 
 export const isMinistry = (r: Role) => r === 'MINISTRY_ADMIN' || r === 'MINISTRY_OFFICER';
+/** Read-only oversight of schools: the Ministry, LGA education officers and inspectors. LGA-scoped accounts see only their LGA. */
+export const isOversight = (r: Role) => isMinistry(r) || r === 'LGA_OFFICER' || r === 'INSPECTOR';
+/** Roles tied to an LGA: required for LGA officers, optional for inspectors (none means state-wide). */
+export const LGA_ROLES: Role[] = ['LGA_OFFICER', 'INSPECTOR'];
 export const canSeeAccounts = (r: Role) => isMinistry(r) || r === 'SCHOOL_ADMIN';
 export const canSeeActivity = (r: Role) => r === 'MINISTRY_ADMIN' || r === 'SCHOOL_ADMIN';
 
