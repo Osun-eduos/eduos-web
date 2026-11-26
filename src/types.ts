@@ -373,6 +373,7 @@ export interface SmsMessage {
 export interface SmsSummary {
   today: Record<SmsStatus, number>;
   absenceSms: boolean | null;
+  resultsSms: boolean | null;
   delayMinutes: number;
   provider: string;
   sending: boolean;

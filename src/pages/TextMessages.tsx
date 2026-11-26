@@ -33,11 +33,12 @@ export function TextMessages() {
   }, [date, status]);
   useEffect(load, [load]);
 
-  async function toggle(on: boolean) {
+  async function toggle(on: boolean, which: 'absenceSms' | 'resultsSms' = 'absenceSms') {
     setError(null);
     try {
-      await api('/sms/settings', { method: 'PATCH', json: { absenceSms: on } });
-      setNote(on ? 'Absence texts are on.' : 'Absence texts are off. Texts waiting to go out were stopped.');
+      await api('/sms/settings', { method: 'PATCH', json: { [which]: on } });
+      const what = which === 'absenceSms' ? 'Absence texts' : 'Report card texts';
+      setNote(on ? `${what} are on.` : `${what} are off. Texts waiting to go out were stopped.`);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'That did not work.');
@@ -88,6 +89,7 @@ export function TextMessages() {
             <div className="k">Absence texts</div>
             <div className="v" style={{ fontSize: '1.2rem' }}>{summary?.absenceSms ? 'On' : 'Off'}</div>
             <button className="btn sm mt" onClick={() => toggle(!summary?.absenceSms)}>{summary?.absenceSms ? 'Switch off' : 'Switch on'}</button>
+            <div className="small muted mt">Report card texts: <b>{summary?.resultsSms ? 'on' : 'off'}</b> · <button className="linklike" onClick={() => toggle(!summary?.resultsSms, 'resultsSms')}>{summary?.resultsSms ? 'switch off' : 'switch on'}</button></div>
           </div>
         ) : (
           <div className="card kpi">

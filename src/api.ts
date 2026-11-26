@@ -84,3 +84,23 @@ export async function apiObjectUrl(path: string): Promise<string> {
   if (!res.ok) throw new ApiError(res.status, 'Could not load the file.');
   return URL.createObjectURL(await res.blob());
 }
+
+/** Downloads a file (such as an export) as the signed-in user, under the name the server gives it. */
+export async function apiDownload(path: string, fallbackName: string) {
+  const get = () => fetch(BASE + path, { credentials: 'include', headers: tokens.get() ? { Authorization: `Bearer ${tokens.get()}` } : {} });
+  let res = await get();
+  if (res.status === 401 && (await tokens.refresh())) res = await get();
+  if (!res.ok) {
+    const body = await parse(res);
+    throw new ApiError(res.status, messageFrom(body, res.status).message);
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

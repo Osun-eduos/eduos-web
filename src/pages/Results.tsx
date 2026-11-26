@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { ErrorAlert, formatDate, ordinal, pct, SheetPill } from '../components/ui';
@@ -133,6 +133,8 @@ type RemarkDraft = Record<string, { teacherRemark: string; principalRemark: stri
 
 export function ClassResultsPage() {
   const { classId } = useParams();
+  const [search] = useSearchParams();
+  const termId = search.get('term');
   const { user } = useAuth();
   const [r, setR] = useState<ClassResults | null>(null);
   const [remarks, setRemarks] = useState<RemarkDraft>({});
@@ -149,8 +151,8 @@ export function ClassResultsPage() {
   }, []);
 
   useEffect(() => {
-    api<ClassResults>(`/results/class?classId=${classId}`).then(apply).catch((e) => setError(e.message));
-  }, [classId, apply]);
+    api<ClassResults>(`/results/class?classId=${classId}${termId ? `&termId=${termId}` : ''}`).then(apply).catch((e) => setError(e.message));
+  }, [classId, termId, apply]);
 
   async function run(fn: () => Promise<ClassResults>, done: string) {
     setBusy(true);

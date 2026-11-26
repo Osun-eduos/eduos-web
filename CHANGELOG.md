@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.0] - 2026-11-26
+
+### Added
+- Dashboard for the Ministry, LGA officers and inspectors: headline indicators, a comparison chart with benchmarks, attendance by month, trend by session, a sortable LGA or school table, and Excel, PDF and CSV downloads. Chart colours are checked for colour-blind readers in light and dark mode.
+- Notifications page with an unread count in the sidebar, for everyone.
+- Notices to parents for school administrators, to all parents or one class, with an optional text.
+- Report card texts switch on the Text messages page.
+- Archive of past sessions: each class's results by term and attendance, and the session's indicators.
+
 ## [0.7.0] - 2026-11-26
 
 ### Added

@@ -282,7 +282,7 @@ export function Home() {
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} note="Accounts on a temporary password" />
         </div>}
         <TodayAttendance a={stats?.attendanceToday} ministry />
-        <ComingNext items={['State dashboard and LGA comparison', 'Education indicators and exportable reports', 'Parent notifications in a parent app']} />
+        <p className="mt"><Link className="btn pri" to="/dashboard">Open the dashboard</Link> <span className="small muted">Indicators by LGA and school, trends, and Excel, PDF and CSV reports.</span></p>
       </>
     );
   }
