@@ -65,7 +65,8 @@ export function Layout() {
               <NavLink to="/exams">Exam timetable</NavLink>
             </>
           )}
-          {(isOversight(r) || r === 'SCHOOL_ADMIN') && <NavLink to="/archive">Exam records</NavLink>}
+          {(isOversight(r) || r === 'SCHOOL_ADMIN') && <NavLink to="/records">Exam records</NavLink>}
+          {(isOversight(r) || r === 'SCHOOL_ADMIN') && <NavLink to="/archive">Past sessions</NavLink>}
           {canSeeStaff(r) && (
             <>
               <h3>Staff</h3>

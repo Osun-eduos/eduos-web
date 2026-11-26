@@ -4,7 +4,7 @@ import { api, ApiError } from '../api';
 import { ErrorAlert } from '../components/ui';
 import { levelLabel } from '../roles';
 
-interface Arm { id: string; name: string; capacity: number; students: number; girls: number; boys: number }
+interface Arm { id: string; name: string; capacity: number; students: number; girls: number; boys: number; roster: { id: string; fullName: string; sex: 'F' | 'M' }[] }
 interface Waiting { id: string; fullName: string; sex: 'F' | 'M'; level: string | null; reason: string | null }
 interface Allocation { session: string; levels: { level: string; arms: Arm[]; unplaced: Waiting[] }[]; unknown: Waiting[] }
 
@@ -35,10 +35,12 @@ export function Allocation() {
     }
   }
 
-  async function place(studentId: string, classArmId: string) {
+  async function place(studentId: string, classArmId: string, from?: string) {
     setError(null);
+    setNote(null);
     try {
       await api(`/students/${studentId}/placement`, { method: 'POST', json: { classArmId } });
+      if (from) setNote(`Moved out of ${from}.`);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'That did not work.');
@@ -70,6 +72,22 @@ export function Allocation() {
                 <div className="v">{a.students}/{a.capacity}</div>
                 <div className="small muted">{a.girls} girl{a.girls === 1 ? '' : 's'} · {a.boys} boy{a.boys === 1 ? '' : 's'}</div>
                 <div className="meter mt" aria-hidden><span style={{ width: `${Math.min(100, (a.students / a.capacity) * 100)}%` }} /></div>
+                {l.arms.length > 1 && a.roster.length > 0 && (
+                  <details className="mt">
+                    <summary className="small" style={{ cursor: 'pointer' }}>Students and moves</summary>
+                    <ul className="items">
+                      {a.roster.map((st) => (
+                        <li key={st.id} style={{ gridTemplateColumns: '1fr auto', alignItems: 'center', display: 'grid', gap: 6 }}>
+                          <span className="small"><Link to={`/students/${st.id}`}>{st.fullName}</Link> <span className="muted">{st.sex}</span></span>
+                          <select className="inline" aria-label={`Move ${st.fullName}`} value="" onChange={(e) => e.target.value && place(st.id, e.target.value, a.name)}>
+                            <option value="">Move to…</option>
+                            {l.arms.filter((o) => o.id !== a.id).map((o) => <option key={o.id} value={o.id} disabled={o.students >= o.capacity}>{o.name}{o.students >= o.capacity ? ' (full)' : ''}</option>)}
+                          </select>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </div>
             ))}
             {!l.arms.length && <p className="muted small">No {levelLabel(l.level)} classes yet. <Link to="/classes">Add one</Link>.</p>}

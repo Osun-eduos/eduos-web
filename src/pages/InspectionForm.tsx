@@ -20,6 +20,7 @@ export function InspectionForm() {
   const [visitedOn, setVisitedOn] = useState(todayNG());
   const [answers, setAnswers] = useState<Answers>({});
   const [notes, setNotes] = useState('');
+  const [action, setAction] = useState('');
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [problems, setProblems] = useState<string[]>([]);
@@ -45,7 +46,7 @@ export function InspectionForm() {
     if (missing) return setError(`Answer every item: ${missing} still blank.`);
     setBusy('Saving the report…');
     try {
-      const r = await api<Inspection>('/inspections', { method: 'POST', json: { clientId, schoolId, visitedOn, answers, notes: notes.trim() || undefined } });
+      const r = await api<Inspection>('/inspections', { method: 'POST', json: { clientId, schoolId, visitedOn, answers, notes: notes.trim() || undefined, actionNeeded: action.trim() || undefined } });
       for (const [i, p] of photos.entries()) {
         setBusy(`Uploading photo ${i + 1} of ${photos.length}…`);
         const fd = new FormData();
@@ -118,8 +119,11 @@ export function InspectionForm() {
         ))}
         <div className="card mt">
           <h2>Findings and photos</h2>
-          <Field label="Findings and action needed" full>
+          <Field label="Findings" full>
             <textarea id="inspNotes" rows={4} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Roof over the JSS 2 block leaks; two classrooms closed." />
+          </Field>
+          <Field label="Action needed" full hint="What must be done, so the Ministry or LGA can plan the follow-up.">
+            <textarea id="inspAction" rows={2} maxLength={1000} value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Repair the roof over the JSS 2 block before the rains." />
           </Field>
           <div className="mt">
             <input

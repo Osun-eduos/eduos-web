@@ -41,6 +41,7 @@ import { PopulationPage } from './pages/Population';
 import { StaffRegister } from './pages/StaffRegister';
 import { InspectionForm } from './pages/InspectionForm';
 import { Verify } from './pages/Verify';
+import { ExamRecords } from './pages/ExamRecords';
 import { MySchool } from './pages/SchoolDetail';
 
 const isTeacher = (r: Role) => r === 'TEACHER';
@@ -96,6 +97,7 @@ export function App() {
         <Route path="archive" element={<RequireAuth allow={(r) => isOversight(r) || r === 'SCHOOL_ADMIN'}><Archive /></RequireAuth>} />
         <Route path="notices" element={<RequireAuth allow={isSchoolAdmin}><Notices /></RequireAuth>} />
         <Route path="profile" element={<Profile />} />
+        <Route path="records" element={<RequireAuth allow={(r) => isOversight(r) || r === 'SCHOOL_ADMIN'}><ExamRecords /></RequireAuth>} />
         <Route path="grading" element={<RequireAuth allow={isOversight}><GradingPage /></RequireAuth>} />
         <Route path="population" element={<RequireAuth allow={isOversight}><PopulationPage /></RequireAuth>} />
         <Route path="exams" element={<RequireAuth allow={canEnterScores}><Exams /></RequireAuth>} />

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1] - 2026-11-26
+
+### Added
+- Examination records page: search and filter every approved score, with totals, pages and a CSV download. The old archive is now "Past sessions".
+- Move students between arms from the class allocation page.
+- "Action needed" on inspection reports, on the form, the report and the list.
+
 ## [0.9.0] - 2026-11-26
 
 Everything in the original prototype is now in the product.

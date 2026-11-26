@@ -361,6 +361,7 @@ export interface InspectionSummary {
   issueCount: number;
   photoCount: number;
   notes: string | null;
+  actionNeeded: string | null;
   followUp: { status: FollowUp; note: string | null; at: string } | null;
 }
 export type FollowUp = 'URGENT' | 'PLANNED' | 'RESOLVED';

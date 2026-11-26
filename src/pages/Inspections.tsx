@@ -146,7 +146,7 @@ export function Inspections() {
                   <td style={{ whiteSpace: 'nowrap' }}><Link to={`/inspections/${r.id}`}>{formatDay(r.visitedOn)}</Link></td>
                   <td><b>{r.school.name}</b><br /><span className="small muted">{r.school.lga}</span></td>
                   <td><OverallPill overall={r.overall} /></td>
-                  <td className="small">{r.issues.map((i) => i.text).join('; ') || <span className="muted">None</span>}{r.issueCount > r.issues.length && <span className="muted"> and {r.issueCount - r.issues.length} more</span>}</td>
+                  <td className="small">{r.issues.map((i) => i.text).join('; ') || <span className="muted">None</span>}{r.issueCount > r.issues.length && <span className="muted"> and {r.issueCount - r.issues.length} more</span>}{r.actionNeeded && <div><b>Action:</b> {r.actionNeeded}</div>}</td>
                   <td>{r.overall === 'GOOD' && !r.followUp ? <span className="muted">–</span> : <FollowUpPill f={r.followUp} />}</td>
                   <td>{r.photoCount}</td>
                   <td className="small">{r.inspector.fullName}</td>
@@ -255,6 +255,8 @@ export function InspectionDetail() {
         <div className="card">
           <h2>Inspector's notes</h2>
           <p style={{ whiteSpace: 'pre-wrap' }}>{r.notes || <span className="muted">None.</span>}</p>
+          <h2 className="mt">Action needed</h2>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{r.actionNeeded || <span className="muted">None given.</span>}</p>
           <h2 className="mt">Follow-up</h2>
           <FollowUpEditor r={r} onSaved={setR} />
         </div>
