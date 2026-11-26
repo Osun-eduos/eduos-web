@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { ErrorAlert, Field, formatPhone, todayNG } from '../components/ui';
+import { StaffInsights } from '../components/StaffInsights';
 import { canEditStaff, CATEGORY_LABEL, isOversight, STAFF_STATUS_LABEL } from '../roles';
 import type { School, StaffCategory, StaffRecord, StaffStatus, StaffSummary } from '../types';
 
@@ -151,11 +152,13 @@ export function Staff() {
           <p>{oversight ? 'Teaching and non-teaching staff in the schools you oversee.' : `Teaching and non-teaching staff at ${user.school?.name}.`} Postings, qualifications and training are on each person's record.</p>
         </div>
         <div className="row">
+          {user.role === 'SCHOOL_ADMIN' && <Link className="btn" to="/staff/register">Staff register</Link>}
           <Link className="btn" to="/staff-transfers">Staff transfers</Link>
           {canEditStaff(user.role) && !adding && <button className="btn pri" onClick={() => setParams({ new: '1' })}>Add staff</button>}
         </div>
       </div>
 
+      {!adding && <StaffInsights />}
       {adding && (
         <div className="card" style={{ marginBottom: 14 }}>
           <h2>Add a member of staff</h2>

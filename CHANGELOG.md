@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.9.0] - 2026-11-26
+
+Everything in the original prototype is now in the product.
+
+### Added
+- Sidebar grouped by area, as in the prototype.
+- Dashboard overview: results submitted against the deadline, staff present today, training, average score by term, latest submissions, LGA status, schools needing support, LGA comparisons over terms, and access figures (GER, NER, out of school, transition) with a population estimates page.
+- School profiles with a map (OpenStreetMap), a map view of all schools, and a School profile page for school administrators.
+- Grading system editor with a score checker; sessions created with their terms; results due dates, closing score entry and telling parents when a term begins.
+- Results: submission status for every school, "Approve all awaiting", and a class and subject analysis page.
+- Exam timetable, class allocation with auto-allocation, students list with attendance and term average, previous school and entry class on enrolment.
+- Report cards with overall grade, promotion and verification code, and a public "Check a report card" page at /verify.
+- Staff register with clock-in, staffing insights (training, subject shortages), inspection reports from the website, minimum standards by LGA and follow-up on reports.
+- Parent portal: each child's term average, attendance, position, progress over terms, exam timetable, recent attendance and school announcements.
+- Announcements to staff as well as parents.
+
 ## [0.8.0] - 2026-11-26
 
 ### Added

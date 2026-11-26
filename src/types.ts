@@ -27,8 +27,18 @@ export interface School {
   level: SchoolLevel;
   ownership: Ownership;
   address: string | null;
+  town: string | null;
+  yearEstablished: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  classrooms: number | null;
+  expectedEnrolment: number | null;
+  facilities: string[];
   isActive: boolean;
   createdAt: string;
+  students?: number;
+  pendingInspection?: boolean;
+  lastInspection?: { id?: string; visitedOn: string; overall: string; classrooms?: number | null; usableClassrooms?: number | null } | null;
   accounts?: number;
   accountsByRole?: Partial<Record<Role, number>>;
 }
@@ -89,6 +99,9 @@ export interface StudentSummary {
   school: { id: string; name: string; code: string } | null;
   admissionNumber: string | null;
   currentClass: { id: string; name: string } | null;
+  attendanceRate?: number | null;
+  termAverage?: number | null;
+  transferredIn?: boolean;
 }
 
 export interface Guardian {
@@ -104,6 +117,7 @@ export interface StudentRecord extends StudentSummary {
   stateOfOrigin: string | null;
   lgaOfOrigin: string | null;
   homeAddress?: string | null;
+  previousSchool?: string | null;
   guardians: Guardian[];
   enrolments: { school: string; schoolCode: string; admissionNumber: string; admittedOn: string; leftOn: string | null; leftReason: string | null }[];
   classHistory: { session: string; className: string; school: string }[];
@@ -204,6 +218,8 @@ export interface Term {
   components: Component[];
   showPositions: boolean;
   sssGrading: SssGrading;
+  resultsDueOn: string | null;
+  scoresClosed: boolean;
 }
 
 export interface ClassSubjectRow {
@@ -258,6 +274,9 @@ export interface ReportCard {
   attendance: AttendanceCounts & { marked: number; rate: number | null };
   remarks: { teacher: string | null; principal: string | null };
   gradingScale: { min: number; grade: string; remark: string }[];
+  overallGrade: { grade: string; remark: string } | null;
+  promotion: string | null;
+  verificationCode: string | null;
   nextTermBegins: string | null;
 }
 
@@ -342,7 +361,9 @@ export interface InspectionSummary {
   issueCount: number;
   photoCount: number;
   notes: string | null;
+  followUp: { status: FollowUp; note: string | null; at: string } | null;
 }
+export type FollowUp = 'URGENT' | 'PLANNED' | 'RESOLVED';
 export interface Inspection extends InspectionSummary {
   template: number;
   answers: Record<string, Record<string, number | string | boolean>>;

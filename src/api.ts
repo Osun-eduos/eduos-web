@@ -45,7 +45,7 @@ export async function rawRequest<T>(path: string, init: RequestInit = {}): Promi
     res = await fetch(BASE + path, {
       ...init,
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+      headers: { ...(init.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...(init.headers ?? {}) },
     });
   } catch {
     throw new ApiError(0, 'Cannot reach the server. Check your internet connection.');

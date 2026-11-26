@@ -1,10 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { SchoolMap } from '../components/SchoolMap';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { CredentialsPanel, ErrorAlert, Field } from '../components/ui';
-import { LEVEL_LABEL } from '../roles';
-import type { NewCredentials, Ownership, School, SchoolLevel } from '../types';
+import { LEVEL_LABEL, OVERALL } from '../roles';
+import type { NewCredentials, Overall, Ownership, School, SchoolLevel } from '../types';
 
 interface Created {
   school: School;
@@ -17,6 +18,8 @@ function NewSchoolForm({ lgas, onCreated, onCancel }: { lgas: string[]; onCreate
   const [level, setLevel] = useState<SchoolLevel>('JUNIOR_AND_SENIOR');
   const [ownership, setOwnership] = useState<Ownership>('PUBLIC');
   const [address, setAddress] = useState('');
+  const [town, setTown] = useState('');
+  const [year, setYear] = useState('');
   const [withAdmin, setWithAdmin] = useState(true);
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
@@ -36,7 +39,7 @@ function NewSchoolForm({ lgas, onCreated, onCancel }: { lgas: string[]; onCreate
       const res = await api<Created>('/schools', {
         method: 'POST',
         json: {
-          name, lga, level, ownership, address: address || undefined,
+          name, lga, level, ownership, address: address || undefined, town: town.trim() || undefined, yearEstablished: year ? Number(year) : undefined,
           admin: withAdmin ? { fullName: adminName, email: adminEmail || undefined, phone: adminPhone || undefined } : undefined,
         },
       });
@@ -69,6 +72,12 @@ function NewSchoolForm({ lgas, onCreated, onCancel }: { lgas: string[]; onCreate
           <option value="PUBLIC">Public</option>
           <option value="PRIVATE">Private</option>
         </select>
+      </Field>
+      <Field label="Town (optional)">
+        <input id="town" maxLength={80} value={town} onChange={(e) => setTown(e.target.value)} />
+      </Field>
+      <Field label="Year established (optional)">
+        <input id="yearEstablished" inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, ''))} />
       </Field>
       <Field label="Address (optional)">
         <input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
@@ -107,7 +116,10 @@ export function Schools() {
   const [q, setQ] = useState('');
   const [created, setCreated] = useState<Created | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const nav = useNavigate();
   const creating = params.get('new') === '1' && user?.role === 'MINISTRY_ADMIN';
+  const located = schools.filter((s) => s.latitude != null && s.longitude != null);
 
   const load = useCallback(() => {
     const qs = new URLSearchParams();
@@ -169,29 +181,40 @@ export function Schools() {
               {lgas.map((l) => <option key={l}>{l}</option>)}
             </select>
           </label>
+          <div className="seg" role="tablist" style={{ alignSelf: 'end' }}>
+            <button role="tab" aria-selected={view === 'list'} onClick={() => setView('list')}>List</button>
+            <button role="tab" aria-selected={view === 'map'} onClick={() => setView('map')}>Map</button>
+          </div>
         </div>
         <ErrorAlert error={error} />
-        <div className="tbl">
+        {view === 'map' && (
+          <>
+            <SchoolMap schools={located.map((s) => ({ id: s.id, name: s.name, code: s.code, latitude: s.latitude!, longitude: s.longitude!, overall: s.lastInspection?.overall }))} onOpen={(id) => nav(`/schools/${id}`)} />
+            <p className="small muted mt">{located.length} of {schools.length} schools have a location. Colour shows the latest inspection: green good, amber fair, red poor or critical, grey not yet inspected.</p>
+          </>
+        )}
+        {view === 'list' && <div className="tbl">
           <table>
             <thead>
-              <tr><th>School no.</th><th>Name</th><th>LGA</th><th>Level</th><th>Owner</th><th>Accounts</th><th>Status</th></tr>
+              <tr><th>School no.</th><th>Name</th><th>LGA</th><th>Level</th><th>Owner</th><th className="num">Students</th><th>Inspection</th><th>Status</th></tr>
             </thead>
             <tbody>
               {schools.map((s) => (
                 <tr key={s.id}>
                   <td className="mono small">{s.code}</td>
-                  <td><Link to={`/schools/${s.id}`}>{s.name}</Link></td>
+                  <td><Link to={`/schools/${s.id}`}>{s.name}</Link>{s.town && <div className="small muted">{s.town}</div>}</td>
                   <td>{s.lga}</td>
                   <td>{LEVEL_LABEL[s.level]}</td>
                   <td>{s.ownership === 'PUBLIC' ? 'Public' : 'Private'}</td>
-                  <td className="mono">{s.accounts ?? 0}</td>
+                  <td className="num">{s.students ?? 0}</td>
+                  <td>{s.lastInspection ? <span className={`pill ${OVERALL[s.lastInspection.overall as Overall].pill}`}>{OVERALL[s.lastInspection.overall as Overall].label}</span> : <span className="pill p-warn">Pending inspection</span>}</td>
                   <td>{s.isActive ? <span className="pill p-good">Active</span> : <span className="pill p-mut">Deactivated</span>}</td>
                 </tr>
               ))}
-              {!schools.length && <tr><td colSpan={7} className="muted">No schools yet.</td></tr>}
+              {!schools.length && <tr><td colSpan={8} className="muted">No schools yet.</td></tr>}
             </tbody>
           </table>
-        </div>
+        </div>}
       </div>
     </>
   );

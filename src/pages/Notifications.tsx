@@ -4,7 +4,7 @@ import { api } from '../api';
 import { ErrorAlert, formatDate } from '../components/ui';
 
 export interface InboxItem { id: string; kind: string; title: string; body: string; link: string | null; read: boolean; at: string }
-const KIND: Record<string, string> = { ABSENCE: 'Absence', RESULTS: 'Results', TRANSFER: 'Transfer', NOTICE: 'School notice' };
+const KIND: Record<string, string> = { ABSENCE: 'Absence', RESULTS: 'Results', TRANSFER: 'Transfer', NOTICE: 'Notice', ENROLMENT: 'Enrolment' };
 
 /** Tells the sidebar to refresh its unread count. */
 export const inboxChanged = () => window.dispatchEvent(new Event('eduos:inbox'));

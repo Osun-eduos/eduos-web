@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { AcademicSession, Component, SssGrading, Term } from '../types';
-import { ErrorAlert, Field, formatDay } from './ui';
+import { ErrorAlert, Field, formatDay, todayNG } from './ui';
 
 const DEFAULT: Component[] = [
   { key: 'CA1', label: 'CA 1', max: 20 },
@@ -24,6 +24,20 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
   const [showPositions, setShowPositions] = useState(true);
   const [sssGrading, setSssGrading] = useState<SssGrading>('WAEC');
   const [busy, setBusy] = useState(false);
+  const [notify, setNotify] = useState<string | null>(null);
+  const [notifySms, setNotifySms] = useState(true);
+  const [note, setNote] = useState<string | null>(null);
+
+  async function tellParents(id: string) {
+    setError(null);
+    try {
+      const r = await api<{ parents: number; texts: number }>(`/terms/${id}/notify-resumption`, { method: 'POST', json: { sms: notifySms } });
+      setNote(`Told ${r.parents.toLocaleString('en-NG')} parent${r.parents === 1 ? '' : 's'} in the app${r.texts ? `, and ${r.texts.toLocaleString('en-NG')} by text` : ''}.`);
+      setNotify(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'That did not work.');
+    }
+  }
 
   const load = useCallback(() => {
     api<Term[]>(`/terms?sessionId=${session.id}`)
@@ -72,14 +86,15 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
       <h2>Terms in {session.name}</h2>
       <p className="small muted" style={{ marginBottom: 10 }}>Teachers enter scores in the current term. The score split can change until scores are entered; senior secondary grading can change until SSS results are released.</p>
       <ErrorAlert error={error} />
+      {note && <div className="alert ok" style={{ marginBottom: 10 }}>{note}</div>}
       <div className="tbl">
         <table>
-          <thead><tr><th>Term</th><th>Dates</th><th>Score split</th><th>Positions on report cards</th><th>Senior secondary grading</th><th>Status</th><th /></tr></thead>
+          <thead><tr><th>Term</th><th>Dates</th><th>Score split</th><th>Positions</th><th>SSS grading</th><th>Results due</th><th>Score entry</th><th>Status</th><th /></tr></thead>
           <tbody>
             {terms.map((t) => (
               <tr key={t.id}>
                 <td><b>{t.name}</b></td>
-                <td className="small">{formatDay(t.startDate)} to {formatDay(t.endDate)}</td>
+                <td className="small" style={{ whiteSpace: 'nowrap' }}>{formatDay(t.startDate)}<br />to {formatDay(t.endDate)}</td>
                 <td className="small">{splitText(t.components)}</td>
                 <td>
                   {admin ? (
@@ -97,11 +112,32 @@ export function TermsPanel({ session, admin }: { session: AcademicSession; admin
                     </select>
                   ) : SSS_GRADING_LABEL[t.sssGrading]}
                 </td>
-                <td>{t.isCurrent ? <span className="pill p-good">Current</span> : <span className="pill p-mut">Not current</span>}</td>
-                <td style={{ textAlign: 'right' }}>{admin && !t.isCurrent && session.isCurrent && <button className="btn sm" onClick={() => act(`/terms/${t.id}/make-current`)}>Make current</button>}</td>
+                <td>
+                  {admin ? (
+                    <input className="inline" type="date" aria-label={`Results due for ${t.name}`} value={t.resultsDueOn ?? ''} min={t.startDate} onChange={(e) => act(`/terms/${t.id}`, { resultsDueOn: e.target.value || null })} />
+                  ) : t.resultsDueOn ? formatDay(t.resultsDueOn) : '–'}
+                </td>
+                <td>
+                  {t.scoresClosed ? <span className="pill p-bad">Closed</span> : <span className="pill p-good">Open</span>}
+                  {admin && t.isCurrent && <button className="btn sm" style={{ marginLeft: 6 }} onClick={() => act(`/terms/${t.id}`, { scoresClosed: !t.scoresClosed })}>{t.scoresClosed ? 'Reopen' : 'Close'}</button>}
+                </td>
+                <td>{t.isCurrent ? <span className="pill p-good">Current</span> : t.startDate > todayNG() ? <span className="pill p-warn">Upcoming</span> : <span className="pill p-mut">Not current</span>}</td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {admin && !t.isCurrent && session.isCurrent && <button className="btn sm" onClick={() => act(`/terms/${t.id}/make-current`)}>Make current</button>}
+                  {admin && t.startDate > todayNG() && notify !== t.id && <br />}
+                  {admin && t.startDate > todayNG() && (notify === t.id ? (
+                    <span className="row actions" style={{ justifyContent: 'flex-end' }}>
+                      <label className="small row" style={{ gap: 4 }}><input type="checkbox" checked={notifySms} onChange={(e) => setNotifySms(e.target.checked)} /> Also by text</label>
+                      <button className="btn sm pri" onClick={() => tellParents(t.id)}>Send</button>
+                      <button className="btn sm" onClick={() => setNotify(null)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <button className="btn sm" style={{ marginLeft: 6 }} onClick={() => setNotify(t.id)}>Tell parents</button>
+                  ))}
+                </td>
               </tr>
             ))}
-            {!terms.length && <tr><td colSpan={7} className="muted">No terms yet.</td></tr>}
+            {!terms.length && <tr><td colSpan={9} className="muted">No terms yet.</td></tr>}
           </tbody>
         </table>
       </div>

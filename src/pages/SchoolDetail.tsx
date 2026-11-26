@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
+import { SchoolProfile } from '../components/SchoolProfile';
 import { CredentialsPanel, ErrorAlert, formatDate } from '../components/ui';
 import { canSeeAccounts, LEVEL_LABEL, ROLE_LABEL } from '../roles';
 import type { NewCredentials, Role, School, User } from '../types';
@@ -78,10 +79,17 @@ export function SchoolDetail() {
           </div>
         ))}
         <div className="card kpi">
+          <div className="k">Students</div>
+          <div className="v">{school.students ?? 0}</div>
+        </div>
+        <div className="card kpi" style={{ display: 'none' }}>
           <div className="k">Registered</div>
           <div className="v" style={{ fontSize: '1rem', marginTop: 10 }}>{formatDate(school.createdAt)}</div>
         </div>
       </div>
+
+      <SchoolProfile school={school} canEdit={admin} onSaved={setSchool} />
+      <div className="mt" />
 
       {creds && <div style={{ marginBottom: 14 }}><CredentialsPanel creds={creds} onDone={() => setCreds(null)} /></div>}
       {adding && (
@@ -109,6 +117,28 @@ export function SchoolDetail() {
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+/** The school administrator's own school profile. */
+export function MySchool() {
+  const { user } = useAuth();
+  const [school, setSchool] = useState<School | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (user?.school) api<School>(`/schools/${user.school.id}`).then(setSchool).catch((e) => setError(e.message));
+  }, [user?.school]);
+  if (!school) return <ErrorAlert error={error} />;
+  return (
+    <>
+      <div className="head">
+        <div>
+          <h1>{school.name}</h1>
+          <p><span className="mono">{school.code}</span> · {school.lga} LGA · {LEVEL_LABEL[school.level]} · registered {formatDate(school.createdAt)}. Keep the profile up to date: the Ministry uses it for planning and inspections. Only the Ministry can change the name and address.</p>
+        </div>
+      </div>
+      <SchoolProfile school={school} canEdit onSaved={setSchool} />
     </>
   );
 }

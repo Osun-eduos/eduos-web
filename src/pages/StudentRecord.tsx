@@ -12,7 +12,7 @@ import { GuardianFields, guardianPayload, guardianProblem } from './EnrolStudent
 function EditDetails({ s, onSaved, onCancel }: { s: Rec; onSaved: (r: Rec) => void; onCancel: () => void }) {
   const [f, setF] = useState({
     surname: s.surname, firstName: s.firstName, middleName: s.middleName ?? '', sex: s.sex, dateOfBirth: s.dateOfBirth,
-    stateOfOrigin: s.stateOfOrigin ?? '', lgaOfOrigin: s.lgaOfOrigin ?? '', homeAddress: s.homeAddress ?? '',
+    stateOfOrigin: s.stateOfOrigin ?? '', lgaOfOrigin: s.lgaOfOrigin ?? '', homeAddress: s.homeAddress ?? '', previousSchool: s.previousSchool ?? '',
   });
   const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f, v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -37,6 +37,7 @@ function EditDetails({ s, onSaved, onCancel }: { s: Rec; onSaved: (r: Rec) => vo
       <Field label="State of origin"><input value={f.stateOfOrigin} onChange={(e) => set('stateOfOrigin', e.target.value)} /></Field>
       <Field label="LGA of origin"><input value={f.lgaOfOrigin} onChange={(e) => set('lgaOfOrigin', e.target.value)} /></Field>
       <Field label="Home address"><input value={f.homeAddress} onChange={(e) => set('homeAddress', e.target.value)} /></Field>
+      <Field label="Previous school"><input value={f.previousSchool} maxLength={120} onChange={(e) => set('previousSchool', e.target.value)} /></Field>
       <div className="full"><ErrorAlert error={error} /></div>
       <div className="full row"><button className="btn pri" type="submit">Save</button><button className="btn" type="button" onClick={onCancel}>Cancel</button></div>
     </form>
@@ -150,6 +151,7 @@ export function StudentRecord() {
               <dt>Date of birth</dt><dd>{formatDay(s.dateOfBirth)} ({ageFrom(s.dateOfBirth)} years)</dd>
               <dt>State / LGA of origin</dt><dd>{[s.stateOfOrigin, s.lgaOfOrigin].filter(Boolean).join(' · ') || '–'}</dd>
               {s.homeAddress !== undefined && <><dt>Home address</dt><dd>{s.homeAddress || '–'}</dd></>}
+              {s.previousSchool !== undefined && <><dt>Previous school</dt><dd>{s.previousSchool || '–'}</dd></>}
             </dl>
           )}
         </div>

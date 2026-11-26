@@ -31,8 +31,8 @@ export function Notices() {
     if (f.sms && length > SMS_MAX) return setError(`A notice sent by text can be at most ${SMS_MAX} characters, title included.`);
     setBusy(true);
     try {
-      const r = await api<{ audience: string; recipients: number; texts: number }>('/notices', { method: 'POST', json: { title: f.title, body: f.body, classArmId: f.classArmId || undefined, sms: f.sms } });
-      setDone(`Sent to ${r.recipients} parent${r.recipients === 1 ? '' : 's'} (${r.audience.toLowerCase() === 'all parents' ? 'all parents' : `parents in ${r.audience}`})${r.texts ? `, ${r.texts} by text` : ''}.`);
+      const r = await api<{ audience: string; recipients: number; texts: number }>('/notices', { method: 'POST', json: { title: f.title, body: f.body, ...(f.classArmId === 'STAFF' ? { audience: 'STAFF' } : { classArmId: f.classArmId || undefined }), sms: f.sms } });
+      setDone(`Sent to ${r.recipients} ${f.classArmId === 'STAFF' ? 'member' : 'parent'}${r.recipients === 1 ? '' : 's'}${f.classArmId === 'STAFF' ? ' of staff' : ''} (${r.audience.toLowerCase()})${r.texts ? `, ${r.texts} by text` : ''}.`);
       setF({ title: '', body: '', classArmId: '', sms: false });
       load();
     } catch (err) {
@@ -46,8 +46,8 @@ export function Notices() {
     <>
       <div className="head">
         <div>
-          <h1>Notices to parents</h1>
-          <p>Parents see notices in their inbox on the website and the EduOS app. Texts reach parents without smartphones; each school can text up to 3 notices a day.</p>
+          <h1>Announcements</h1>
+          <p>Send notices to parents, or to your staff. They appear in the inbox on the website and the EduOS app; texts reach people without smartphones. Each school can text up to 3 notices a day.</p>
         </div>
       </div>
       <div className="card" style={{ marginBottom: 14 }}>
@@ -57,6 +57,7 @@ export function Notices() {
             <select id="noticeClass" value={f.classArmId} onChange={(e) => setF({ ...f, classArmId: e.target.value })}>
               <option value="">All parents</option>
               {classes.map((c) => <option key={c.id} value={c.id}>Parents in {c.name}</option>)}
+              <option value="STAFF">All staff</option>
             </select>
           </Field>
           <Field label="Title" full><input id="noticeTitle" maxLength={80} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="e.g. Inter-house sports" /></Field>

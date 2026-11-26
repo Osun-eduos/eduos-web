@@ -33,6 +33,15 @@ import { ClassSubjects } from './pages/ClassSubjects';
 import { MyScores, ScoreSheetPage } from './pages/Scores';
 import { ClassResultsPage, Results } from './pages/Results';
 import { ReportCard } from './pages/ReportCard';
+import { GradingPage } from './pages/Grading';
+import { Exams } from './pages/Exams';
+import { Allocation } from './pages/Allocation';
+import { AnalysisPage } from './pages/Analysis';
+import { PopulationPage } from './pages/Population';
+import { StaffRegister } from './pages/StaffRegister';
+import { InspectionForm } from './pages/InspectionForm';
+import { Verify } from './pages/Verify';
+import { MySchool } from './pages/SchoolDetail';
 
 const isTeacher = (r: Role) => r === 'TEACHER';
 const canEnterScores = (r: Role) => r === 'TEACHER' || r === 'SCHOOL_ADMIN';
@@ -53,6 +62,8 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/verify" element={<Verify />} />
+      <Route path="/verify/:code" element={<Verify />} />
       <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Home />} />
@@ -85,6 +96,14 @@ export function App() {
         <Route path="archive" element={<RequireAuth allow={(r) => isOversight(r) || r === 'SCHOOL_ADMIN'}><Archive /></RequireAuth>} />
         <Route path="notices" element={<RequireAuth allow={isSchoolAdmin}><Notices /></RequireAuth>} />
         <Route path="profile" element={<Profile />} />
+        <Route path="grading" element={<RequireAuth allow={isOversight}><GradingPage /></RequireAuth>} />
+        <Route path="population" element={<RequireAuth allow={isOversight}><PopulationPage /></RequireAuth>} />
+        <Route path="exams" element={<RequireAuth allow={canEnterScores}><Exams /></RequireAuth>} />
+        <Route path="classes/allocation" element={<RequireAuth allow={isSchoolAdmin}><Allocation /></RequireAuth>} />
+        <Route path="results/:classId/analysis" element={<RequireAuth allow={canSeeResults}><AnalysisPage /></RequireAuth>} />
+        <Route path="staff/register" element={<RequireAuth allow={isSchoolAdmin}><StaffRegister /></RequireAuth>} />
+        <Route path="inspections/new" element={<RequireAuth allow={(r) => r === 'INSPECTOR' || r === 'LGA_OFFICER'}><InspectionForm /></RequireAuth>} />
+        <Route path="my-school" element={<RequireAuth allow={isSchoolAdmin}><MySchool /></RequireAuth>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

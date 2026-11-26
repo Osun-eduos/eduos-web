@@ -6,7 +6,7 @@ import { ErrorAlert, formatDay } from '../components/ui';
 import { ageFrom, isOversight } from '../roles';
 import type { ClassArm, SchoolRef, StudentStatus, StudentSummary } from '../types';
 
-export function StudentsTable({ students, showSchool }: { students: StudentSummary[]; showSchool?: boolean }) {
+export function StudentsTable({ students, showSchool, stats }: { students: StudentSummary[]; showSchool?: boolean; stats?: boolean }) {
   return (
     <div className="tbl">
       <table>
@@ -19,21 +19,25 @@ export function StudentsTable({ students, showSchool }: { students: StudentSumma
             <th>Class</th>
             <th>Sex</th>
             <th>Date of birth</th>
+            {stats && <th className="num">Attendance</th>}
+            {stats && <th className="num">Term avg</th>}
           </tr>
         </thead>
         <tbody>
           {students.map((s) => (
             <tr key={s.id}>
-              <td><Link to={`/students/${s.id}`}>{s.fullName}</Link></td>
+              <td><Link to={`/students/${s.id}`}>{s.fullName}</Link>{s.transferredIn && <span className="pill p-ind" style={{ marginLeft: 6 }}>Transferred in</span>}</td>
               <td className="mono small">{s.learnerId}</td>
               {!showSchool && <td className="mono small">{s.admissionNumber ?? '–'}</td>}
               {showSchool && <td>{s.school?.name ?? <span className="muted">None</span>}</td>}
               <td>{s.currentClass?.name ?? <span className="pill p-warn">No class</span>}</td>
               <td>{s.sex}</td>
               <td className="small">{formatDay(s.dateOfBirth)} <span className="muted">({ageFrom(s.dateOfBirth)})</span></td>
+              {stats && <td className="num">{s.attendanceRate == null ? '–' : `${s.attendanceRate}%`}</td>}
+              {stats && <td className="num">{s.termAverage ?? '–'}</td>}
             </tr>
           ))}
-          {!students.length && <tr><td colSpan={7} className="muted">No students match.</td></tr>}
+          {!students.length && <tr><td colSpan={9} className="muted">No students match.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -70,6 +74,7 @@ export function Students() {
     if (classId) qs.set('classId', classId);
     if (unplaced) qs.set('unplaced', 'true');
     if (schoolId) qs.set('schoolId', schoolId);
+    if (!ministry) qs.set('stats', 'true');
     api<StudentSummary[]>(`/students?${qs}`).then(setStudents).catch((e) => setError(e.message));
   }, [ministry, schoolId, q, status, classId, unplaced]);
 
@@ -149,7 +154,7 @@ export function Students() {
           <p className="muted">Type a name or learner ID, or choose a school.</p>
         ) : (
           <>
-            <StudentsTable students={students} showSchool={ministry} />
+            <StudentsTable students={students} showSchool={ministry} stats={!ministry} />
             <p className="small muted mt">{students.length} student{students.length === 1 ? '' : 's'}</p>
           </>
         )}

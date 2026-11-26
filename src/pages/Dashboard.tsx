@@ -2,6 +2,7 @@ import { MouseEvent, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, apiDownload, ApiError } from '../api';
 import { useAuth } from '../auth';
+import { AccessPanel, CompareLgas, OverviewPanel } from '../components/Overview';
 import { ErrorAlert } from '../components/ui';
 import type { AcademicSession } from '../types';
 
@@ -11,6 +12,7 @@ export interface Figures {
   pupilsPerTeacher: number | null; qualifiedTeachers: number | null; trcnTeachers: number | null; attendanceRate: number | null; registerMarks: number;
   resultEntries: number; average: number | null; passRate: number | null; creditRate: number | null; passRateGirls: number | null; passRateBoys: number | null;
   inspected: number; condition: { good: number; fair: number; poor: number; critical: number };
+  classrooms: number; pupilsPerClassroom: number | null;
 }
 interface Indicators {
   scope: { lga: string | null; level: 'state' | 'lga'; label: string };
@@ -129,18 +131,20 @@ function MonthColumns({ months }: { months: Trends['attendanceByMonth'] }) {
   );
 }
 
-const TABLE: { label: string; get: (f: Figures) => number | null; suffix?: string }[] = [
+/** `worse` says which way is bad: cells more than 10% worse than the total are shaded, as in the prototype. */
+const TABLE: { label: string; get: (f: Figures) => number | null; suffix?: string; worse?: 'low' | 'high' }[] = [
   { label: 'Schools', get: (f) => f.schools },
   { label: 'Students', get: (f) => f.students },
   { label: 'Girls %', get: (f) => f.girlsShare },
   { label: 'GPI', get: (f) => f.gpi },
   { label: 'Teachers', get: (f) => f.teachers },
-  { label: 'Pupils / teacher', get: (f) => f.pupilsPerTeacher },
-  { label: 'Qualified %', get: (f) => f.qualifiedTeachers },
-  { label: 'Attendance %', get: (f) => f.attendanceRate },
-  { label: 'Average', get: (f) => f.average },
-  { label: 'Pass %', get: (f) => f.passRate },
-  { label: 'Credit %', get: (f) => f.creditRate },
+  { label: 'Pupils / teacher', get: (f) => f.pupilsPerTeacher, worse: 'high' },
+  { label: 'Qualified %', get: (f) => f.qualifiedTeachers, worse: 'low' },
+  { label: 'Attendance %', get: (f) => f.attendanceRate, worse: 'low' },
+  { label: 'Average', get: (f) => f.average, worse: 'low' },
+  { label: 'Pass %', get: (f) => f.passRate, worse: 'low' },
+  { label: 'Credit %', get: (f) => f.creditRate, worse: 'low' },
+  { label: 'Pupils / classroom', get: (f) => f.pupilsPerClassroom, worse: 'high' },
   { label: 'Inspected', get: (f) => f.inspected },
   { label: 'Poor or critical', get: (f) => f.condition.poor + f.condition.critical },
 ];
@@ -247,6 +251,9 @@ export function Dashboard() {
       </div>
       <ErrorAlert error={error} />
 
+      {!sessionId && !termId && <OverviewPanel lga={lga} />}
+
+      <h2 className="mt">Indicators{data?.term ? ` · ${data.term.name}` : ''}</h2>
       <div className="grid g4">
         <Kpi label="Schools" value={fmt(f?.schools)} note={f ? `${fmt(f.classes)} classes · average ${fmt(f.averageClassSize)} per class` : undefined} />
         <Kpi label="Students enrolled" value={fmt(f?.students)} note={f ? `Primary ${fmt(f.byStage.primary)} · JSS ${fmt(f.byStage.jss)} · SSS ${fmt(f.byStage.sss)}` : undefined} />
@@ -293,7 +300,7 @@ export function Dashboard() {
 
       <div className="card mt">
         <h2>{data?.scope.level === 'lga' ? `Schools in ${data.scope.label}` : 'LGA comparison'}</h2>
-        <p className="small muted" style={{ marginBottom: 8 }}>Click a column heading to sort. Teachers are counted as posted on {data?.staffAsOf ?? '…'}.</p>
+        <p className="small muted" style={{ marginBottom: 8 }}>Click a column heading to sort. Shaded cells are more than 10% worse than the total. Teachers are counted as posted on {data?.staffAsOf ?? '…'}.</p>
         <div className="tbl">
           <table>
             <thead>
@@ -313,7 +320,12 @@ export function Dashboard() {
                     {data?.scope.level === 'state' && !user.lga ? <button className="linklike" onClick={() => setLga(r.name)}>{r.name}</button> : <b>{r.name}</b>}
                     {r.code && <div className="small muted mono">{r.code}</div>}
                   </td>
-                  {TABLE.map((c) => <td key={c.label} className="num">{fmt(c.get(r.figures))}</td>)}
+                  {TABLE.map((c) => {
+                    const v = c.get(r.figures);
+                    const ref = f ? c.get(f) : null;
+                    const lag = c.worse && v !== null && ref !== null && (c.worse === 'low' ? v < ref * 0.9 : v > ref * 1.1);
+                    return <td key={c.label} className={`num${lag ? ' lagging' : ''}`}>{fmt(v)}</td>;
+                  })}
                 </tr>
               ))}
               {f && (
@@ -326,6 +338,9 @@ export function Dashboard() {
           </table>
         </div>
       </div>
+      {!user.lga && !lga && data && <CompareLgas lgas={lgas} initial={[...data.breakdown].sort((a, b) => b.figures.students - a.figures.students).slice(0, 2).map((r) => r.name)} key={data.session.id} />}
+      {(user.lga || lga) && <CompareLgas lgas={[]} initial={[]} />}
+      <AccessPanel lga={lga} sessionId={sessionId} canEdit={user.role === 'MINISTRY_ADMIN'} />
       <Definitions />
     </>
   );

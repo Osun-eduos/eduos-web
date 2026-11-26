@@ -94,8 +94,10 @@ export function ReportCard() {
               <dt>Subjects</dt><dd>{summary.subjects}</dd>
               <dt>Total score</dt><dd>{summary.total ?? '–'}</dd>
               <dt>Average</dt><dd><b>{summary.average ?? '–'}</b></dd>
+              <dt>Overall grade</dt><dd><b>{card.overallGrade ? `${card.overallGrade.grade} · ${card.overallGrade.remark}` : '–'}</b></dd>
               <dt>Class average</dt><dd>{summary.classAverage ?? '–'}</dd>
               {t.showPositions && <><dt>Position</dt><dd><b>{summary.position ?? '–'}</b> of {summary.outOf}</dd></>}
+              {card.promotion && <><dt>Promotion</dt><dd><b>{card.promotion}</b></dd></>}
             </dl>
           </section>
           <section>
@@ -119,6 +121,11 @@ export function ReportCard() {
 
         <footer className="report-foot small muted">
           Grades: {card.gradingScale.map((b, i, all) => `${b.grade} ${b.min === 0 ? `below ${all[i - 1]?.min ?? 40}` : `${b.min}+`} ${b.remark}`).join(' · ')}
+          {card.verificationCode ? (
+            <div style={{ marginTop: 6 }}>
+              Verification code <b className="mono">{card.verificationCode}</b>. Anyone can check this report card against Ministry records at {window.location.host}/verify.
+            </div>
+          ) : !card.released ? <div style={{ marginTop: 6 }}>Provisional: a verification code is added when the results are released.</div> : null}
         </footer>
       </article>
     </>

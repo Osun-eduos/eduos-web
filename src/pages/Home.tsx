@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { ErrorAlert, formatDay, formatPhone, pct, SheetPill } from '../components/ui';
+import { LineChart } from '../components/charts';
+import { ClockIn } from './StaffRegister';
+import { AttendancePill, ErrorAlert, formatDay, formatPhone, pct, SheetPill, todayNG } from '../components/ui';
 import { ageFrom, isMinistry, isOversight, ROLE_LABEL } from '../roles';
 import type { AttendanceToday, MySubjects, ReportCardTerm, Role, StudentAttendance, StudentSummary } from '../types';
 
@@ -71,15 +73,6 @@ function TodayAttendance({ a, ministry }: { a: AttendanceToday | null | undefine
   );
 }
 
-function ComingNext({ items }: { items: string[] }) {
-  return (
-    <div className="card mt">
-      <h2>Coming next</h2>
-      <p className="muted">These features from the prototype are being built into this app:</p>
-      <ul>{items.map((i) => <li key={i}>{i}</li>)}</ul>
-    </div>
-  );
-}
 
 function TeacherSubjects() {
   const [data, setData] = useState<MySubjects | null>(null);
@@ -188,11 +181,72 @@ function ChildReport({ id }: { id: string }) {
   return <span className="small">Report card: <b>{latest.name}, {latest.session}</b> is ready</span>;
 }
 
+interface Progress { termId: string; term: string; session: string; className: string; average: number | null; position: string | null }
+interface Timetable { term: { name: string } | null; className: string | null; papers: { subjectCode: string; subject: string; date: string; startTime: string; minutes: number }[] }
+interface SchoolNotice { id: string; title: string; body: string; school: string | null; createdAt: string }
+
+/** One child's page in the parent portal: results, attendance, the exam timetable and progress over time. */
+function ChildPortal({ child }: { child: Child }) {
+  const [att, setAtt] = useState<StudentAttendance | null>(null);
+  const [prog, setProg] = useState<Progress[]>([]);
+  const [exams, setExams] = useState<Timetable | null>(null);
+  useEffect(() => {
+    api<StudentAttendance>(`/attendance/students/${child.id}`).then(setAtt).catch(() => setAtt(null));
+    api<Progress[]>(`/report-cards/${child.id}/progress`).then(setProg).catch(() => setProg([]));
+    api<Timetable>(`/exam-papers/student/${child.id}`).then(setExams).catch(() => setExams(null));
+  }, [child.id]);
+  const last = prog[prog.length - 1];
+  const c = att?.counts;
+  const upcoming = (exams?.papers ?? []).filter((p) => p.date >= todayNG());
+  return (
+    <>
+      <div className="grid g4 mt">
+        <div className="card kpi"><div className="k">Term average</div><div className="v">{last?.average ?? '–'}</div><div className="small muted">{last ? `${last.term}, ${last.session}` : 'No report card yet'}</div></div>
+        <div className="card kpi"><div className="k">Attendance</div><div className="v">{pct(att?.rate ?? null)}</div><div className="small muted">{c ? `${c.LATE} late, ${c.ABSENT} absent this session` : ' '}</div></div>
+        <div className="card kpi"><div className="k">Class position</div><div className="v">{last?.position?.split(' ')[0] ?? '–'}</div><div className="small muted">{last?.position ? `${last.position.split(' ').slice(1).join(' ')} in ${last.className}` : ' '}</div></div>
+        <div className="card kpi"><div className="k">Results</div><div className="v" style={{ fontSize: '1.1rem' }}>{last ? 'Released' : 'Not yet'}</div><div className="small muted">{last ? <Link to={`/report-card/${child.id}?term=${last.termId}`}>View report card</Link> : 'Shown once the principal releases them'}</div></div>
+      </div>
+      <div className="grid g2 mt">
+        <div className="card">
+          <h2>Academic progress</h2>
+          {prog.length ? (
+            <LineChart label="Term average over time" labels={prog.map((p) => `${p.term.replace(' term', '')} ${p.className.split(' ').slice(0, 2).join(' ')}`)} lines={[{ name: 'Term average', color: 'var(--series-1)', values: prog.map((p) => p.average) }]} max={100} />
+          ) : <p className="muted small">The chart appears after the first report card.</p>}
+        </div>
+        <div className="card">
+          <h2>Exam timetable{exams?.term ? ` · ${exams.term.name}` : ''}</h2>
+          {!exams?.papers.length && <p className="muted small">The school has not published an exam timetable for {exams?.className ?? 'this class'} yet.</p>}
+          <ul className="items">
+            {(upcoming.length ? upcoming : exams?.papers ?? []).map((p) => (
+              <li key={p.subjectCode}><b>{p.subject}</b><span className="small muted">{formatDay(p.date)} · {p.startTime} · {p.minutes} min</span></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="card mt">
+        <h2>Recent attendance</h2>
+        {!att?.records.length && <p className="muted small">No registers yet this session.</p>}
+        <div className="tbl">
+          <table>
+            <tbody>
+              {att?.records.slice(0, 8).map((r) => <tr key={r.date}><td>{formatDay(r.date)}</td><td><AttendancePill status={r.status} /></td><td className="small muted">{r.note ?? ''}</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+        <Link className="small" to={`/students/${child.id}`}>Full record</Link>
+      </div>
+    </>
+  );
+}
+
 function ParentHome() {
   const [kids, setKids] = useState<Child[] | null>(null);
+  const [pick, setPick] = useState(0);
+  const [notices, setNotices] = useState<SchoolNotice[]>([]);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     api<Child[]>('/my/children').then(setKids).catch((e) => setError(e.message));
+    api<SchoolNotice[]>('/notices/mine').then(setNotices).catch(() => {});
   }, []);
   if (error) return <ErrorAlert error={error} />;
   if (!kids) return <p className="muted">Loading…</p>;
@@ -203,19 +257,30 @@ function ParentHome() {
         <p className="muted">Ask your child's school to link your account to their record.</p>
       </div>
     );
+  const child = kids[Math.min(pick, kids.length - 1)];
   return (
-    <div className="grid g2">
-      {kids.map((k) => (
-        <Link key={k.id} to={`/students/${k.id}`} className="card child" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <b>{k.fullName}</b>
-          <span className="small muted">You're listed as {k.relationship.toLowerCase()} · <span className="mono">{k.learnerId}</span></span>
-          <span>{k.school?.name ?? 'Not enrolled in a school'}</span>
-          <span>{k.currentClass ? <>Class <b>{k.currentClass.name}</b>{k.classTeacher && <> · class teacher {k.classTeacher}</>}</> : <span className="pill p-warn">No class yet</span>}</span>
-          <ChildAttendance id={k.id} />
-          <ChildReport id={k.id} />
-        </Link>
-      ))}
-    </div>
+    <>
+      <div className="grid g2">
+        {kids.map((k, i) => (
+          <button key={k.id} type="button" onClick={() => setPick(i)} className="card child" aria-pressed={i === pick} style={{ textAlign: 'left', font: 'inherit', color: 'inherit', cursor: 'pointer', outline: i === pick && kids.length > 1 ? '2px solid var(--series-1)' : undefined }}>
+            <b>{k.fullName}</b>
+            <span className="small muted">You're listed as {k.relationship.toLowerCase()} · <span className="mono">{k.learnerId}</span></span>
+            <span>{k.school?.name ?? 'Not enrolled in a school'}</span>
+            <span>{k.currentClass ? <>Class <b>{k.currentClass.name}</b>{k.classTeacher && <> · class teacher {k.classTeacher}</>}</> : <span className="pill p-warn">No class yet</span>}</span>
+            <ChildAttendance id={k.id} />
+            <ChildReport id={k.id} />
+          </button>
+        ))}
+      </div>
+      <ChildPortal child={child} key={child.id} />
+      <div className="card mt">
+        <div className="row between"><h2 style={{ margin: 0 }}>School announcements</h2><Link className="small" to="/notifications">All notifications</Link></div>
+        {!notices.length && <p className="muted small mt">No announcements yet.</p>}
+        <ul className="items mt">
+          {notices.slice(0, 6).map((n) => <li key={n.id}><b>{n.title}</b><span>{n.body}</span><span className="small muted">{n.school} · {formatDay(n.createdAt.slice(0, 10))}</span></li>)}
+        </ul>
+      </div>
+    </>
   );
 }
 
@@ -301,6 +366,7 @@ export function Home() {
           </div>
         </div>
         <ErrorAlert error={error} />
+        <ClockIn />
         {noSession && <div className="alert info" style={{ marginBottom: 14 }}>The Ministry hasn't opened an academic session yet, so classes can't be created. You can still enrol students.</div>}
         {!!stats?.scoresAwaitingApproval && (
           <div className="alert info" style={{ marginBottom: 14 }}>
@@ -325,7 +391,6 @@ export function Home() {
           <Kpi label="Transfers waiting" value={stats?.pendingTransfersIn ?? '–'} to="/transfers" />
         </div>
         <TodayAttendance a={stats?.attendanceToday} />
-        <ComingNext items={['Results SMS to parents', 'Parent notifications in a parent app', 'Education indicators and reports']} />
       </>
     );
   }
@@ -338,12 +403,7 @@ export function Home() {
           <p>{ROLE_LABEL[user.role]}{user.school && user.role === 'TEACHER' ? ` · ${user.school.name}` : ''}</p>
         </div>
       </div>
-      {user.role === 'TEACHER' ? <><TeacherHome /><TeacherSubjects /></> : <ParentHome />}
-      <ComingNext
-        items={user.role === 'TEACHER'
-          ? ['Offline score entry and register on the mobile app', 'Lesson notes', 'Training records']
-          : ['Absence and results SMS', 'Announcements', 'Fee payments for private schools']}
-      />
+      {user.role === 'TEACHER' ? <><ClockIn /><TeacherHome /><TeacherSubjects /></> : <ParentHome />}
     </>
   );
 }

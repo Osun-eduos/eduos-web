@@ -3,8 +3,20 @@ import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { HolidaysPanel } from '../components/HolidaysPanel';
 import { TermsPanel } from '../components/TermsPanel';
-import { ErrorAlert, Field, formatDay } from '../components/ui';
+import { ErrorAlert, Field, formatDay, todayNG } from '../components/ui';
 import type { AcademicSession } from '../types';
+
+/** Term dates from the first day: each term runs Monday to Friday for its weeks, then the break (as the API does it). */
+function planTerms(start: string, weeks: number[], breakWeeks: number) {
+  const add = (iso: string, d: number) => new Date(Date.parse(iso) + d * 86_400_000).toISOString().slice(0, 10);
+  let from = start;
+  return weeks.map((w) => {
+    const end = add(from, w * 7 - 3);
+    const t: [string, string] = [from, end];
+    from = add(end, 3 + breakWeeks * 7);
+    return t;
+  });
+}
 
 export function Sessions() {
   const { user } = useAuth();
@@ -15,7 +27,11 @@ export function Sessions() {
   const [name, setName] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const [withTerms, setWithTerms] = useState(true);
+  const [weeks, setWeeks] = useState([13, 12, 12]);
+  const [breakWeeks, setBreakWeeks] = useState(3);
   const [busy, setBusy] = useState(false);
+  const plan = withTerms && start ? planTerms(start, weeks, breakWeeks) : null;
 
   const load = useCallback(() => {
     api<AcademicSession[]>('/sessions').then(setSessions).catch((e) => setError(e.message));
@@ -26,10 +42,10 @@ export function Sessions() {
     e.preventDefault();
     setError(null);
     if (!/^\d{4}\/\d{4}$/.test(name)) return setError('Name the session like 2026/2027.');
-    if (!start || !end) return setError('Enter the start and end dates.');
+    if (!start || (!end && !withTerms)) return setError(withTerms ? 'Enter the first day of the first term.' : 'Enter the start and end dates.');
     setBusy(true);
     try {
-      await api('/sessions', { method: 'POST', json: { name, startDate: start, endDate: end } });
+      await api('/sessions', { method: 'POST', json: { name, startDate: start, ...(end ? { endDate: end } : {}), ...(withTerms ? { terms: { weeks, breakWeeks } } : {}) } });
       setName('');
       setStart('');
       setEnd('');
@@ -100,12 +116,35 @@ export function Sessions() {
               <Field label="Session" full hint="Two consecutive years, e.g. 2026/2027">
                 <input id="sessionName" value={name} onChange={(e) => setName(e.target.value)} placeholder="2026/2027" />
               </Field>
-              <Field label="First day">
+              <label className="full row small" style={{ gap: 6 }}>
+                <input type="checkbox" checked={withTerms} onChange={(e) => setWithTerms(e.target.checked)} /> Create the three terms as well
+              </label>
+              <Field label={withTerms ? 'First term starts' : 'First day'}>
                 <input id="sessionStart" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
               </Field>
-              <Field label="Last day">
+              <Field label="Last day" hint={withTerms ? 'Optional: the session ends with the third term.' : undefined}>
                 <input id="sessionEnd" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
               </Field>
+              {withTerms && (
+                <>
+                  <div className="field">
+                    Weeks per term
+                    <span className="row" style={{ gap: 4 }}>
+                      {weeks.map((w, i) => (
+                        <input key={i} className="inline" style={{ width: 60 }} type="number" min={8} max={16} aria-label={`Weeks in term ${i + 1}`} value={w} onChange={(e) => setWeeks((ws) => ws.map((x, j) => (j === i ? Number(e.target.value) : x)))} />
+                      ))}
+                    </span>
+                  </div>
+                  <Field label="Break between terms (weeks)">
+                    <input id="breakWeeks" type="number" min={1} max={8} value={breakWeeks} onChange={(e) => setBreakWeeks(Number(e.target.value))} />
+                  </Field>
+                  {plan && (
+                    <ul className="full small muted" style={{ margin: 0, paddingLeft: 18 }}>
+                      {plan.map((t, i) => <li key={i}>{['First', 'Second', 'Third'][i]} term: {formatDay(t[0])} to {formatDay(t[1])}</li>)}
+                    </ul>
+                  )}
+                </>
+              )}
               <div className="full">
                 <button className="btn pri" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create session'}</button>
               </div>
@@ -114,7 +153,7 @@ export function Sessions() {
           </div>
         )}
       </div>
-      {sessions.filter((s) => s.isCurrent).map((s) => (
+      {sessions.filter((s) => s.isCurrent || s.startDate > todayNG()).map((s) => (
         <div key={s.id}>
           <TermsPanel session={s} admin={admin} />
           <HolidaysPanel session={s} admin={admin} />

@@ -2,9 +2,71 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
-import { ErrorAlert, formatDate, ordinal, pct, SheetPill } from '../components/ui';
+import { ErrorAlert, formatDate, formatDay, ordinal, pct, SheetPill } from '../components/ui';
 import { isOversight } from '../roles';
 import type { ClassArm, ClassResults, ResultsSummary, Term } from '../types';
+
+interface Submissions {
+  term: { resultsDueOn: string | null; scoresClosed: boolean };
+  summary: { schools: number; released: number; percent: number | null; partlyReleased: number; awaitingApproval: number; withTeachers: number; notStarted: number; overdue: boolean };
+  schools: { id: string; name: string; code: string; lga: string; classes: number; released: number; sheets: { draft: number; submitted: number; approved: number }; status: SubmissionStatus; lastRelease: string | null }[];
+}
+type SubmissionStatus = 'RELEASED' | 'PARTLY_RELEASED' | 'AWAITING_APPROVAL' | 'WITH_TEACHERS' | 'NOT_STARTED';
+const SUBMISSION: Record<SubmissionStatus, [string, string]> = {
+  RELEASED: ['p-good', 'Released'],
+  PARTLY_RELEASED: ['p-ind', 'Part released'],
+  AWAITING_APPROVAL: ['p-warn', 'Awaiting school approval'],
+  WITH_TEACHERS: ['p-mut', 'With teachers'],
+  NOT_STARTED: ['p-bad', 'Not started'],
+};
+
+/** Where every school is with the term's results. */
+function SubmissionStatusCard({ termId }: { termId: string }) {
+  const [data, setData] = useState<Submissions | null>(null);
+  const [filter, setFilter] = useState<SubmissionStatus | ''>('');
+  useEffect(() => {
+    setData(null);
+    api<Submissions>(`/results/submissions?termId=${termId}`).then(setData).catch(() => {});
+  }, [termId]);
+  if (!data) return null;
+  const rows = data.schools.filter((x) => !filter || x.status === filter);
+  const s = data.summary;
+  return (
+    <div className="card mt">
+      <div className="row between">
+        <div>
+          <h2 style={{ margin: 0 }}>Submission status</h2>
+          <p className="small muted">
+            {s.released} of {s.schools} schools ({pct(s.percent)}) have released every class
+            {data.term.resultsDueOn ? `; due ${formatDay(data.term.resultsDueOn)}` : ''}{s.overdue ? ' (overdue)' : ''}.{data.term.scoresClosed ? ' Score entry is closed.' : ''}
+          </p>
+        </div>
+        <select className="inline" aria-label="Show schools" value={filter} onChange={(e) => setFilter(e.target.value as SubmissionStatus | '')}>
+          <option value="">All schools ({s.schools})</option>
+          {(Object.keys(SUBMISSION) as SubmissionStatus[]).map((k) => <option key={k} value={k}>{SUBMISSION[k][1]} ({data.schools.filter((x) => x.status === k).length})</option>)}
+        </select>
+      </div>
+      <div className="tbl mt"><table>
+        <thead><tr><th>School</th><th>LGA</th><th>Status</th><th className="num">Classes released</th><th className="num">Sheets with teachers</th><th className="num">Awaiting approval</th><th>Last release</th></tr></thead>
+        <tbody>
+          {rows.slice(0, 300).map((x) => (
+            <tr key={x.id}>
+              <td><Link to={`/schools/${x.id}`}>{x.name}</Link><div className="small muted mono">{x.code}</div></td>
+              <td>{x.lga}</td>
+              <td><span className={`pill ${SUBMISSION[x.status][0]}`}>{SUBMISSION[x.status][1]}</span></td>
+              <td className="num">{x.released} of {x.classes}</td>
+              <td className="num">{x.sheets.draft}</td>
+              <td className="num">{x.sheets.submitted + x.sheets.approved}</td>
+              <td className="small">{x.lastRelease ? formatDate(x.lastRelease) : '–'}</td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colSpan={7} className="muted">No schools.</td></tr>}
+        </tbody>
+      </table></div>
+      {rows.length > 300 && <p className="small muted mt">Showing the first 300 of {rows.length}. Filter by status to narrow the list.</p>}
+    </div>
+  );
+}
 
 function MinistrySummary() {
   const [terms, setTerms] = useState<Term[]>([]);
@@ -35,9 +97,10 @@ function MinistrySummary() {
       </div>
       <ErrorAlert error={error} />
       {!terms.length && <p className="muted">No terms have been set up yet.</p>}
+      {termId && <SubmissionStatusCard termId={termId} />}
       {data && (
         <>
-          <div className="grid g4">
+          <div className="grid g4 mt">
             <div className="card kpi"><div className="k">Schools with results</div><div className="v">{data.schools.length}</div></div>
             <div className="card kpi"><div className="k">Classes released</div><div className="v">{data.schools.reduce((s, x) => s + x.classesReleased, 0)}</div></div>
             <div className="card kpi"><div className="k">Students</div><div className="v">{data.schools.reduce((s, x) => s + x.students, 0)}</div></div>
@@ -80,7 +143,24 @@ export function Results() {
   const [classes, setClasses] = useState<ClassArm[] | null>(null);
   const [status, setStatus] = useState<Record<string, ClassResults | null>>({});
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
   const ministry = !!user && isOversight(user.role);
+
+  async function approveAll() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<{ approved: number }>('/scoresheets/approve-all', { method: 'POST', json: {} });
+      setNote(`${r.approved} score sheet${r.approved === 1 ? '' : 's'} approved.`);
+      setReload((n) => n + 1);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'That did not work.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (ministry) return;
@@ -90,10 +170,12 @@ export function Results() {
         cs.forEach((c) => api<ClassResults>(`/results/class?classId=${c.id}`).then((r) => setStatus((s) => ({ ...s, [c.id]: r }))).catch(() => setStatus((s) => ({ ...s, [c.id]: null }))));
       })
       .catch((e) => setError(e.message));
-  }, [ministry]);
+  }, [ministry, reload]);
 
   if (ministry) return <MinistrySummary />;
   const term = Object.values(status).find(Boolean)?.term;
+  const waitingAll = Object.values(status).reduce((n, r) => n + (r?.subjects.filter((x) => x.status === 'SUBMITTED').length ?? 0), 0);
+  const waitingNames = Object.values(status).flatMap((r) => (r ? r.subjects.filter((x) => x.status === 'SUBMITTED').map((x) => `${r.class.name} ${x.name}`) : []));
   return (
     <>
       <div className="head">
@@ -101,8 +183,11 @@ export function Results() {
           <h1>Results</h1>
           <p>{term ? `${term.name}, ${term.session}. ` : ''}Approve each subject's scores, add remarks, then release the class's results to parents and the Ministry.</p>
         </div>
+        {user?.role === 'SCHOOL_ADMIN' && waitingAll > 0 && <button className="btn pri" disabled={busy} onClick={approveAll}>{busy ? 'Approving…' : `Approve all ${waitingAll} awaiting`}</button>}
       </div>
       <ErrorAlert error={error} />
+      {note && <div className="alert ok" style={{ marginBottom: 12 }}>{note}</div>}
+      {waitingAll > 0 && <p className="small muted" style={{ marginBottom: 8 }}>Waiting on you: {waitingNames.slice(0, 6).join(', ')}{waitingNames.length > 6 ? ` and ${waitingNames.length - 6} more` : ''}.</p>}
       <div className="card">
         <div className="tbl"><table>
           <thead><tr><th>Class</th><th>Subjects approved</th><th>Waiting for you</th><th>Status</th><th /></tr></thead>
@@ -117,7 +202,7 @@ export function Results() {
                   <td>{r ? `${approved} of ${r.subjects.length}` : r === null ? '–' : '…'}</td>
                   <td>{waiting ? <span className="pill p-warn">{waiting} to approve</span> : <span className="muted">–</span>}</td>
                   <td>{r?.released ? <span className="pill p-good">Released</span> : r?.canRelease ? <span className="pill p-ind">Ready to release</span> : <span className="pill p-mut">In progress</span>}</td>
-                  <td style={{ textAlign: 'right' }}><Link className="btn sm" to={`/results/${c.id}`}>Open</Link></td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}><Link className="btn sm" to={`/results/${c.id}/analysis`}>Analysis</Link> <Link className="btn sm" to={`/results/${c.id}`}>Open</Link></td>
                 </tr>
               );
             })}
@@ -198,7 +283,10 @@ export function ClassResultsPage() {
           <h1>{r.class.name} results</h1>
           <p>{r.term.name}, {r.term.session} · {r.class.school.name}{r.class.classTeacher ? ` · class teacher ${r.class.classTeacher.fullName}` : ''}</p>
         </div>
-        {r.released ? <span className="pill p-good">Released {formatDate(r.released.at)} by {r.released.by}</span> : null}
+        <span className="row">
+          {r.released ? <span className="pill p-good">Released {formatDate(r.released.at)} by {r.released.by}</span> : null}
+          {(!isOversight(user!.role) || r.released) && <Link className="btn sm" to={`/results/${r.class.id}/analysis${termId ? `?term=${termId}` : ''}`}>Class analysis</Link>}
+        </span>
       </div>
       <ErrorAlert error={error} />
       {msg && <div className="alert ok" style={{ marginBottom: 12 }}>{msg}</div>}

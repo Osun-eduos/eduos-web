@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { CredentialsPanel, ErrorAlert, Field } from '../components/ui';
+import { levelLabel } from '../roles';
 import type { ClassArm, NewCredentials, Sex, StudentSummary, User } from '../types';
 
 interface Duplicate {
@@ -85,7 +86,8 @@ export function guardianProblem(mode: GuardianMode, v: { parentId: string; fullN
 export function EnrolStudent() {
   const [classes, setClasses] = useState<ClassArm[]>([]);
   const [lgas, setLgas] = useState<string[]>([]);
-  const [f, setF] = useState({ surname: '', firstName: '', middleName: '', sex: '' as Sex | '', dateOfBirth: '', stateOfOrigin: 'Osun', lgaOfOrigin: '', homeAddress: '', admittedOn: today(), classArmId: '' });
+  const [f, setF] = useState({ surname: '', firstName: '', middleName: '', sex: '' as Sex | '', dateOfBirth: '', stateOfOrigin: 'Osun', lgaOfOrigin: '', homeAddress: '', previousSchool: '', admittedOn: today(), classArmId: '', entryLevel: '' });
+  const [levels, setLevels] = useState<string[]>([]);
   const [gMode, setGMode] = useState<GuardianMode>('new');
   const [g, setG] = useState({ relationship: 'Mother', parentId: '', fullName: '', phone: '', email: '' });
   const [dups, setDups] = useState<Duplicate[] | null>(null);
@@ -96,6 +98,7 @@ export function EnrolStudent() {
   useEffect(() => {
     api<ClassArm[]>('/classes').then(setClasses).catch(() => {});
     api<string[]>('/schools/lgas').then(setLgas).catch(() => {});
+    api<string[]>('/classes/levels').then((l) => { setLevels(l); setF((x) => ({ ...x, entryLevel: x.entryLevel || l[0] || '' })); }).catch(() => {});
   }, []);
 
   const set = (k: keyof typeof f, v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -114,7 +117,8 @@ export function EnrolStudent() {
         method: 'POST',
         json: {
           surname: f.surname, firstName: f.firstName, middleName: f.middleName || undefined, sex: f.sex, dateOfBirth: f.dateOfBirth,
-          stateOfOrigin: f.stateOfOrigin || undefined, lgaOfOrigin: f.lgaOfOrigin || undefined, homeAddress: f.homeAddress || undefined,
+          stateOfOrigin: f.stateOfOrigin || undefined, lgaOfOrigin: f.lgaOfOrigin || undefined, homeAddress: f.homeAddress || undefined, previousSchool: f.previousSchool || undefined,
+          entryLevel: !f.classArmId && f.entryLevel ? f.entryLevel : undefined,
           admittedOn: f.admittedOn || undefined, classArmId: f.classArmId || undefined, confirmDuplicate: confirmDuplicate || undefined,
           guardian: guardianPayload(gMode, g),
         },
@@ -165,7 +169,7 @@ export function EnrolStudent() {
       <div className="head">
         <div>
           <h1>Enrol a student</h1>
-          <p>The student gets an Osun learner ID that stays with them for life, and an admission number for your school.</p>
+          <p>The student gets an Osun learner ID that stays with them for life, and an admission number for your school. The parent or guardian gets both by text and in the app.</p>
         </div>
         <Link className="btn" to="/students">Back to students</Link>
       </div>
@@ -194,12 +198,13 @@ export function EnrolStudent() {
           )}
         </Field>
         <Field label="Home address" full><input id="homeAddress" value={f.homeAddress} onChange={(e) => set('homeAddress', e.target.value)} /></Field>
+        <Field label="Previous school (if any)" full><input id="previousSchool" maxLength={120} value={f.previousSchool} onChange={(e) => set('previousSchool', e.target.value)} /></Field>
 
         <h2 className="full" style={{ marginTop: 8 }}>Admission</h2>
         <Field label="Admission date"><input id="admittedOn" type="date" value={f.admittedOn} onChange={(e) => set('admittedOn', e.target.value)} /></Field>
         <Field label="Class" hint={classes.length ? undefined : 'Create classes first, or place the student later.'}>
           <select id="classArmId" value={f.classArmId} onChange={(e) => set('classArmId', e.target.value)}>
-            <option value="">Place later</option>
+            <option value="">Allocate later</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id} disabled={c.students >= c.capacity}>
                 {c.name} · {c.students}/{c.capacity}{c.students >= c.capacity ? ' (full)' : ''}
@@ -207,6 +212,14 @@ export function EnrolStudent() {
             ))}
           </select>
         </Field>
+
+        {!f.classArmId && (
+          <Field label="Entry class" hint="Used to allocate the student to an arm later.">
+            <select id="entryLevel" value={f.entryLevel} onChange={(e) => set('entryLevel', e.target.value)}>
+              {levels.map((l) => <option key={l} value={l}>{levelLabel(l)}</option>)}
+            </select>
+          </Field>
+        )}
 
         <h2 className="full" style={{ marginTop: 8 }}>Parent or guardian</h2>
         <GuardianFields mode={gMode} setMode={setGMode} value={g} set={(k, v) => setG((x) => ({ ...x, [k]: v }))} allowNone />
