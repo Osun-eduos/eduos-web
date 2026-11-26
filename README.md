@@ -43,7 +43,7 @@ Every person has their own account and signs in with an email address or a Niger
 | Ministry administrator | Another Ministry administrator (the first one by the API seed script) | Register schools, create any account, reset passwords, deactivate accounts and schools, see all activity |
 | Ministry officer | Ministry administrator | See all schools and accounts (read only) |
 | LGA education officer | Ministry administrator | See the schools, students, registers, transfers and released results in one LGA (read only) |
-| School inspector | Ministry administrator | The same, for one LGA or the whole state |
+| School inspector | Ministry administrator | The same, for one LGA or the whole state, plus recording inspections on the mobile app |
 | School administrator | Ministry administrator | Create teacher and parent accounts for their school, reset their passwords, deactivate them, see their school's activity |
 | Teacher | School administrator | Take the register, enter scores for their subjects, write remarks for their class |
 | Parent | School administrator | See their children's attendance and report cards |

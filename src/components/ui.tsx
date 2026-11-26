@@ -86,6 +86,7 @@ export function formatDay(iso: string | null) {
 const TRANSFER_PILL: Record<string, [string, string]> = {
   REQUESTED: ['p-warn', 'Awaiting decision'],
   ACCEPTED: ['p-good', 'Accepted'],
+  APPROVED: ['p-good', 'Approved'],
   REJECTED: ['p-bad', 'Declined'],
   CANCELLED: ['p-mut', 'Cancelled'],
 };

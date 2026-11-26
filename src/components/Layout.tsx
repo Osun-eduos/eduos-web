@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeResults, canSeeStudents, isOversight, ROLE_LABEL } from '../roles';
+import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeInspections, canSeeResults, canSeeSms, canSeeStaff, canSeeStudents, isOversight, ROLE_LABEL } from '../roles';
 
 export function Layout() {
   const { user, signOut } = useAuth();
@@ -23,6 +23,9 @@ export function Layout() {
           {user.role === 'TEACHER' && <NavLink to="/scores">Scores</NavLink>}
           {canSeeResults(user.role) && <NavLink to="/results">Results</NavLink>}
           {canSeeStudents(user.role) && <NavLink to="/transfers">Transfers</NavLink>}
+          {canSeeStaff(user.role) && <NavLink to="/staff">Staff</NavLink>}
+          {canSeeInspections(user.role) && <NavLink to="/inspections">Inspections</NavLink>}
+          {canSeeSms(user.role) && <NavLink to="/text-messages">Text messages</NavLink>}
           {isOversight(user.role) && <NavLink to="/sessions">Sessions and terms</NavLink>}
           {canSeeAccounts(user.role) && <NavLink to="/accounts">Accounts</NavLink>}
           {canSeeActivity(user.role) && <NavLink to="/activity">Activity</NavLink>}

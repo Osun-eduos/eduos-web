@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0] - 2026-11-26
+
+### Added
+- Staff pages: the registry with search and filters, adding staff, each person's record with qualifications, training, postings and a linked account, and staff transfer requests and approvals.
+- Inspections: every visit with its overall grade and main issues, and a full report with the checklist answers and photos.
+- Text messages: today's absence texts, the school's on/off switch, the message log, and for the Ministry the provider status and a test send.
+- Home screens show teaching and non-teaching staff and pupils per teacher; My account shows your own staff record.
+
 ## [0.6.0] - 2026-11-25
 
 ### Added

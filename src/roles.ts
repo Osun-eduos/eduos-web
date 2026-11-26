@@ -56,3 +56,17 @@ export const canSeeStudents = (r: Role) => r !== 'PARENT' && r !== 'TEACHER';
 export const canTakeAttendance = (r: Role) => r === 'TEACHER' || r === 'SCHOOL_ADMIN';
 export const canSeeAttendance = (r: Role) => r !== 'PARENT';
 export const canSeeResults = (r: Role) => r !== 'PARENT';
+
+export const canSeeStaff = (r: Role) => isOversight(r) || r === 'SCHOOL_ADMIN';
+export const canEditStaff = (r: Role) => r === 'MINISTRY_ADMIN' || r === 'SCHOOL_ADMIN';
+export const canSeeInspections = (r: Role) => isOversight(r) || r === 'SCHOOL_ADMIN';
+export const canSeeSms = (r: Role) => isMinistry(r) || r === 'SCHOOL_ADMIN';
+
+export const STAFF_STATUS_LABEL = { ACTIVE: 'Active', ON_LEAVE: 'On leave', LEFT: 'Left', RETIRED: 'Retired' } as const;
+export const CATEGORY_LABEL = { TEACHING: 'Teaching', NON_TEACHING: 'Non-teaching' } as const;
+export const OVERALL = {
+  GOOD: { label: 'Good', pill: 'p-good' },
+  FAIR: { label: 'Fair', pill: 'p-warn' },
+  POOR: { label: 'Poor', pill: 'p-bad' },
+  CRITICAL: { label: 'Critical', pill: 'p-bad' },
+} as const;

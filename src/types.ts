@@ -277,3 +277,105 @@ export interface Holiday {
   startDate: string;
   endDate: string;
 }
+
+// ---------- Staff registry ----------
+export type StaffCategory = 'TEACHING' | 'NON_TEACHING';
+export type StaffStatus = 'ACTIVE' | 'ON_LEAVE' | 'LEFT' | 'RETIRED';
+export interface SchoolBrief { id: string; name: string; code: string; lga: string }
+export interface StaffSummary {
+  id: string;
+  staffNumber: string;
+  fullName: string;
+  sex: 'F' | 'M';
+  category: StaffCategory;
+  rank: string | null;
+  gradeLevel: number | null;
+  step: number | null;
+  status: StaffStatus;
+  phone: string | null;
+  email: string | null;
+  subjects: string[];
+  school: SchoolBrief | null;
+  account: { id: string; fullName: string; role: Role } | null;
+  trcnNumber: string | null;
+  yearsOfService: number | null;
+}
+export interface StaffRequest {
+  id: string;
+  status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  reason: string;
+  note: string | null;
+  effectiveDate: string;
+  requestedAt: string;
+  decidedAt?: string | null;
+  requestedBy?: string | null;
+  decidedBy?: string | null;
+  from: SchoolBrief | null;
+  to: SchoolBrief | null;
+  staff?: StaffSummary;
+}
+export interface StaffRecord extends StaffSummary {
+  surname: string;
+  firstName: string;
+  middleName: string | null;
+  dateOfBirth: string | null;
+  firstAppointment: string | null;
+  age: number | null;
+  qualifications: { id: string; kind: string; course: string | null; institution: string | null; year: number | null }[];
+  trainings: { id: string; title: string; provider: string | null; startDate: string; endDate: string | null; hours: number | null }[];
+  postings: { id: string; school: SchoolBrief; startDate: string; endDate: string | null; reason: string | null }[];
+  requests: StaffRequest[];
+}
+
+// ---------- Inspections ----------
+export type Overall = 'GOOD' | 'FAIR' | 'POOR' | 'CRITICAL';
+export interface ChecklistItem { key: string; label: string; type: 'count' | 'rating' | 'yesno' | 'choice'; options?: { value: string; label: string }[]; hint?: string }
+export interface Checklist { version: number; ratings: { value: string; label: string }[]; sections: { key: string; title: string; items: ChecklistItem[] }[] }
+export interface InspectionSummary {
+  id: string;
+  school: SchoolBrief;
+  inspector: { id: string; fullName: string; role: Role };
+  visitedOn: string;
+  overall: Overall;
+  createdAt: string;
+  issues: { level: Overall; text: string }[];
+  issueCount: number;
+  photoCount: number;
+  notes: string | null;
+}
+export interface Inspection extends InspectionSummary {
+  template: number;
+  answers: Record<string, Record<string, number | string | boolean>>;
+  photos: { id: string; section: string; caption: string | null; bytes: number }[];
+}
+
+// ---------- Text messages ----------
+export type SmsStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+export interface SmsMessage {
+  id: string;
+  kind: string;
+  to: string;
+  body: string;
+  status: SmsStatus;
+  error: string | null;
+  attempts: number;
+  date: string | null;
+  createdAt: string;
+  sendAfter: string;
+  sentAt: string | null;
+  cost: string | null;
+  /** kudisms, or log when no SMS account is set up and nothing was really sent. */
+  provider: string | null;
+  student: string | null;
+  parent: string | null;
+  school: string | null;
+}
+export interface SmsSummary {
+  today: Record<SmsStatus, number>;
+  absenceSms: boolean | null;
+  delayMinutes: number;
+  provider: string;
+  sending: boolean;
+  balance: string | null;
+  schoolsOff: number | null;
+}

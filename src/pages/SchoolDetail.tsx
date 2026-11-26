@@ -104,6 +104,8 @@ export function SchoolDetail() {
             <Link className="btn" to={`/students?school=${school.id}`}>Students</Link>
             <Link className="btn" to={`/attendance?school=${school.id}`}>Attendance</Link>
             <Link className="btn" to="/results">Results</Link>
+            <Link className="btn" to={`/staff?school=${school.id}`}>Staff</Link>
+            <Link className="btn" to={`/inspections?school=${school.id}`}>Inspections</Link>
           </div>
         </div>
       )}

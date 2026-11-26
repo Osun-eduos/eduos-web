@@ -2,7 +2,12 @@ import { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
-import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeResults, canSeeStudents, isOversight } from './roles';
+import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeInspections, canSeeResults, canSeeSms, canSeeStaff, canSeeStudents, isOversight } from './roles';
+import { InspectionDetail, Inspections } from './pages/Inspections';
+import { Staff } from './pages/Staff';
+import { StaffRecord } from './pages/StaffRecord';
+import { StaffTransfers } from './pages/StaffTransfers';
+import { TextMessages } from './pages/TextMessages';
 import type { Role } from './types';
 import { Accounts } from './pages/Accounts';
 import { Activity } from './pages/Activity';
@@ -65,6 +70,12 @@ export function App() {
         <Route path="results" element={<RequireAuth allow={canSeeResults}><Results /></RequireAuth>} />
         <Route path="results/:classId" element={<RequireAuth allow={canSeeResults}><ClassResultsPage /></RequireAuth>} />
         <Route path="report-card/:studentId" element={<ReportCard />} />
+        <Route path="staff" element={<RequireAuth allow={canSeeStaff}><Staff /></RequireAuth>} />
+        <Route path="staff/:id" element={<RequireAuth allow={canSeeStaff}><StaffRecord /></RequireAuth>} />
+        <Route path="staff-transfers" element={<RequireAuth allow={canSeeStaff}><StaffTransfers /></RequireAuth>} />
+        <Route path="inspections" element={<RequireAuth allow={canSeeInspections}><Inspections /></RequireAuth>} />
+        <Route path="inspections/:id" element={<RequireAuth allow={canSeeInspections}><InspectionDetail /></RequireAuth>} />
+        <Route path="text-messages" element={<RequireAuth allow={canSeeSms}><TextMessages /></RequireAuth>} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

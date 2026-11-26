@@ -75,3 +75,12 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
     throw e;
   }
 }
+
+/** Fetches a file (such as an inspection photo) as the signed-in user and returns a local URL for it. Revoke it when done. */
+export async function apiObjectUrl(path: string): Promise<string> {
+  const get = () => fetch(BASE + path, { credentials: 'include', headers: tokens.get() ? { Authorization: `Bearer ${tokens.get()}` } : {} });
+  let res = await get();
+  if (res.status === 401 && (await tokens.refresh())) res = await get();
+  if (!res.ok) throw new ApiError(res.status, 'Could not load the file.');
+  return URL.createObjectURL(await res.blob());
+}

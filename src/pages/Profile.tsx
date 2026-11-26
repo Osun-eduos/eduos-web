@@ -1,8 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api';
+import type { StaffRecord } from '../types';
 import { useAuth } from '../auth';
-import { formatDate, signInId } from '../components/ui';
+import { formatDay, formatDate, signInId } from '../components/ui';
 import { ROLE_LABEL } from '../roles';
 import { PasswordForm } from './ChangePassword';
+
+/** Read-only view of the signed-in person's own staff record, if the school has linked one. */
+function MyStaffRecord() {
+  const [s, setS] = useState<StaffRecord | null>(null);
+  useEffect(() => {
+    api<StaffRecord | null>('/my/staff-record').then(setS).catch(() => {});
+  }, []);
+  if (!s) return null;
+  const current = s.postings.find((p) => !p.endDate);
+  return (
+    <div className="card mt">
+      <h2>Your staff record</h2>
+      <dl className="kv">
+        <dt>Staff number</dt><dd className="mono">{s.staffNumber}</dd>
+        <dt>Post</dt><dd>{s.rank ?? '–'}{s.gradeLevel ? ` · GL ${s.gradeLevel}${s.step ? `/${s.step}` : ''}` : ''}</dd>
+        <dt>Current school</dt><dd>{current ? `${current.school.name}, since ${formatDay(current.startDate)}` : '–'}</dd>
+        <dt>Years of service</dt><dd>{s.yearsOfService ?? '–'}</dd>
+        <dt>Qualifications</dt><dd>{s.qualifications.map((q) => `${q.kind}${q.year ? ` (${q.year})` : ''}`).join(', ') || '–'}</dd>
+        <dt>Training</dt><dd>{s.trainings.length ? `${s.trainings.length} recorded, latest: ${s.trainings[0].title}` : '–'}</dd>
+      </dl>
+      <p className="small muted mt">If something is wrong, ask your school administrator to correct it.</p>
+    </div>
+  );
+}
 
 export function Profile() {
   const { user } = useAuth();
@@ -39,6 +65,7 @@ export function Profile() {
           )}
         </div>
       </div>
+      <MyStaffRecord />
     </>
   );
 }

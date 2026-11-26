@@ -18,6 +18,9 @@ interface Stats {
   attendanceToday: AttendanceToday | null;
   term: { id: string; name: string; session: string } | null;
   scoresAwaitingApproval: number;
+  staff: { teaching: number; nonTeaching: number } | null;
+  pupilsPerTeacher: number | null;
+  pendingStaffTransfers: number;
 }
 
 interface MyClasses {
@@ -266,6 +269,12 @@ export function Home() {
           <Kpi label="Classes this session" value={stats?.classes ?? '–'} />
           <Kpi label="Not yet in a class" value={stats?.unplaced ?? '–'} />
         </div>
+        <div className="grid g4 mt">
+          <Kpi label="Teaching staff" value={stats?.staff?.teaching ?? '–'} to="/staff" />
+          <Kpi label="Non-teaching staff" value={stats?.staff?.nonTeaching ?? '–'} to="/staff" />
+          <Kpi label="Pupils per teacher" value={stats?.pupilsPerTeacher ?? '–'} note="Students enrolled for each teacher in the registry" />
+          <Kpi label="Staff transfers waiting" value={stats?.pendingStaffTransfers ?? '–'} to="/staff-transfers" />
+        </div>
         {staffCounts && <div className="grid g4 mt">
           <Kpi label="School administrators" value={c?.SCHOOL_ADMIN ?? '–'} />
           <Kpi label="Teachers" value={c?.TEACHER ?? '–'} />
@@ -273,7 +282,7 @@ export function Home() {
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} note="Accounts on a temporary password" />
         </div>}
         <TodayAttendance a={stats?.attendanceToday} ministry />
-        <ComingNext items={['State dashboard and LGA comparison', 'Teacher registry and postings', 'Absence and results SMS to parents']} />
+        <ComingNext items={['State dashboard and LGA comparison', 'Education indicators and exportable reports', 'Parent notifications in a parent app']} />
       </>
     );
   }
@@ -307,16 +316,16 @@ export function Home() {
           <Kpi label="Students" value={stats?.students ?? '–'} to="/students" />
           <Kpi label="Not yet in a class" value={stats?.unplaced ?? '–'} to="/students?unplaced=1" />
           <Kpi label="Classes" value={stats?.classes ?? '–'} to="/classes" />
-          <Kpi label="Teachers" value={c?.TEACHER ?? '–'} to="/accounts" />
+          <Kpi label="Teaching staff" value={stats?.staff?.teaching ?? '–'} to="/staff" note={stats?.pupilsPerTeacher ? `${stats.pupilsPerTeacher} pupils per teacher` : undefined} />
         </div>
         <div className="grid g4 mt">
           <Kpi label="Parents" value={c?.PARENT ?? '–'} />
-          <Kpi label="Administrators" value={c?.SCHOOL_ADMIN ?? '–'} />
+          <Kpi label="Teacher accounts" value={c?.TEACHER ?? '–'} to="/accounts" />
           <Kpi label="Awaiting first sign-in" value={stats?.awaitingFirstSignIn ?? '–'} />
           <Kpi label="Transfers waiting" value={stats?.pendingTransfersIn ?? '–'} to="/transfers" />
         </div>
         <TodayAttendance a={stats?.attendanceToday} />
-        <ComingNext items={['Absence and results SMS to parents', 'Teacher registry and postings', 'Offline score entry on the mobile app']} />
+        <ComingNext items={['Results SMS to parents', 'Parent notifications in a parent app', 'Education indicators and reports']} />
       </>
     );
   }
