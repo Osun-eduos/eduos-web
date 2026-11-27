@@ -20,7 +20,6 @@ const I = {
   phone: 'M7 2h10v20H7zM11 18h2',
   shield: 'M12 3l8 3v6c0 4.5-3.3 8.3-8 9-4.7-.7-8-4.5-8-9V6zM9 12l2 2 4-4',
   check: 'M20 6L9 17l-5-5',
-  code: 'M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16',
 };
 
 function Pillar({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
@@ -104,7 +103,7 @@ export function Landing() {
               <ul className="lp-facts">
                 <li><Icon d={I.check} /> Public and private schools</li>
                 <li><Icon d={I.check} /> Works without internet</li>
-                <li><Icon d={I.check} /> Open-source software</li>
+                <li><Icon d={I.check} /> All 30 local government areas</li>
               </ul>
             </div>
             <div className="lp-flow" aria-label="How a term's results move through Osun EduOS">
@@ -240,7 +239,6 @@ export function Landing() {
               <li><Icon d={I.shield} /><span><b>Two-step sign-in</b> for Ministry accounts, with an authenticator app</span></li>
               <li><Icon d={I.shield} /><span><b>Encrypted</b> on phones and in transit; passwords are never stored</span></li>
               <li><Icon d={I.shield} /><span><b>Every change recorded</b> in an audit log, so records can be trusted</span></li>
-              <li><Icon d={I.code} /><span><b>Open source</b>, so the code that handles children's data can be inspected</span></li>
             </ul>
           </div>
         </section>
@@ -266,10 +264,8 @@ export function Landing() {
           <nav aria-label="Footer">
             <Link to="/login">Sign in</Link>
             <Link to="/verify">Check a report card</Link>
-            <a href="https://github.com/Osun-eduos" rel="noopener noreferrer">Source code</a>
-            <a href="https://github.com/Osun-eduos/.github/blob/main/SECURITY.md" rel="noopener noreferrer">Report a security issue</a>
           </nav>
-          <p className="lp-legal">Open-source software, released under the GNU Affero General Public License v3.0.</p>
+          <p className="lp-legal">© {new Date().getFullYear()} Ministry of Education, State of Osun. All rights reserved.</p>
         </div>
       </footer>
     </div>
