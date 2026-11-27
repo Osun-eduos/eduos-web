@@ -10,9 +10,10 @@ type TokenSource = {
   get: () => string | null;
   refresh: () => Promise<boolean>;
   onPasswordChangeRequired: () => void;
+  onTwoStepRequired: () => void;
 };
 
-let tokens: TokenSource = { get: () => null, refresh: async () => false, onPasswordChangeRequired: () => {} };
+let tokens: TokenSource = { get: () => null, refresh: async () => false, onPasswordChangeRequired: () => {}, onTwoStepRequired: () => {} };
 export function bindTokens(t: TokenSource) {
   tokens = t;
 }
@@ -72,6 +73,7 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
   } catch (e) {
     if (e instanceof ApiError && e.status === 401 && (await tokens.refresh())) return send();
     if (e instanceof ApiError && e.code === 'PASSWORD_CHANGE_REQUIRED') tokens.onPasswordChangeRequired();
+    if (e instanceof ApiError && e.code === 'TWO_STEP_SETUP_REQUIRED') tokens.onTwoStepRequired();
     throw e;
   }
 }

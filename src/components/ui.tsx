@@ -24,6 +24,8 @@ export function StatusPill({ user }: { user: User }) {
   if (!user.isActive) return <span className="pill p-mut">Deactivated</span>;
   if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) return <span className="pill p-bad">Locked</span>;
   if (user.mustChangePassword) return <span className="pill p-warn">Awaiting first sign-in</span>;
+  if (user.twoStepRequired && !user.twoStepEnabled) return <span className="pill p-warn">Two-step not set up</span>;
+  if (user.twoStepEnabled) return <span className="pill p-good">Active · two-step</span>;
   return <span className="pill p-good">Active</span>;
 }
 

@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { formatDay, formatDate, signInId } from '../components/ui';
 import { ROLE_LABEL } from '../roles';
 import { PasswordForm } from './ChangePassword';
+import { TwoStepCard } from './TwoStep';
 
 /** Read-only view of the signed-in person's own staff record, if the school has linked one. */
 function MyStaffRecord() {
@@ -65,6 +66,7 @@ export function Profile() {
           )}
         </div>
       </div>
+      <TwoStepCard />
       <MyStaffRecord />
     </>
   );
