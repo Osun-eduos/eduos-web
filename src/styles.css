@@ -104,7 +104,8 @@ tr:last-child td { border-bottom: 0; }
 .auth-wrap { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; background:
   radial-gradient(circle at 8px 8px, color-mix(in srgb, var(--indigo) 10%, transparent) 2px, transparent 2.5px) 0 0/18px 18px, var(--bg); }
 .auth-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 28px; display: grid; gap: 16px; box-shadow: 0 20px 50px rgba(20, 26, 60, 0.08); }
-.auth-card .brand { justify-self: start; }
+.auth-card .brand { justify-self: center; text-align: center; padding: 14px 22px; }
+.auth-card .brand span { display: block; }
 .auth-card form { display: grid; gap: 12px; }
 
 @media (max-width: 900px) {
