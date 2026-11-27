@@ -56,7 +56,7 @@ export function SchoolMap({ schools, onPick, picked, small, onOpen }: { schools:
       mk.addTo(g);
     }
     if (picked) {
-      L.circleMarker(picked, { radius: 9, color: css('--surface', '#fff'), weight: 2, fillColor: css('--series-1', '#4757B8'), fillOpacity: 1 }).addTo(g);
+      L.circleMarker(picked, { radius: 9, color: css('--surface', '#fff'), weight: 2, fillColor: css('--series-1', '#7b5229'), fillOpacity: 1 }).addTo(g);
       pts.push(picked);
     }
     if (pts.length === 1) m.setView(pts[0], 14);

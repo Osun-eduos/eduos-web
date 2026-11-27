@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api';
 import { needsTwoStep, useAuth } from '../auth';
 import { ErrorAlert } from '../components/ui';
@@ -75,10 +75,11 @@ export function Login() {
     return (
       <div className="auth-wrap">
         <div className="auth-card">
-          <div className="brand">
+          <Link to="/" className="auth-back">← Back to home</Link>
+          <Link to="/" className="brand" aria-label="Osun EduOS home">
             <b>Osun EduOS</b>
-            <span>Education Management &amp; Intelligence</span>
-          </div>
+            <span>Ministry of Education, State of Osun</span>
+          </Link>
           <div>
             <h1>Enter your code</h1>
             <p className="muted">
@@ -119,10 +120,11 @@ export function Login() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="brand">
+        <Link to="/" className="auth-back">← Back to home</Link>
+        <Link to="/" className="brand" aria-label="Osun EduOS home">
           <b>Osun EduOS</b>
-          <span>Education Management &amp; Intelligence</span>
-        </div>
+          <span>Ministry of Education, State of Osun</span>
+        </Link>
         <div>
           <h1>Sign in</h1>
           <p className="muted">For the Ministry of Education, schools, teachers and parents.</p>
