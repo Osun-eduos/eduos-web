@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useAuth } from './auth';
+import { needsTwoStep, useAuth } from './auth';
 import { Layout } from './components/Layout';
 import { canSeeAccounts, canSeeActivity, canSeeAttendance, canSeeInspections, canSeeResults, canSeeSms, canSeeStaff, canSeeStudents, isOversight } from './roles';
 import { InspectionDetail, Inspections } from './pages/Inspections';
@@ -16,6 +16,7 @@ import type { Role } from './types';
 import { Accounts } from './pages/Accounts';
 import { Activity } from './pages/Activity';
 import { ChangePassword } from './pages/ChangePassword';
+import { TwoStepRequired } from './pages/TwoStep';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
@@ -55,6 +56,7 @@ function RequireAuth({ children, allow }: { children: ReactNode; allow?: (r: Rol
   if (!ready) return <p className="muted" style={{ padding: 24 }}>Loading…</p>;
   if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (user.mustChangePassword && loc.pathname !== '/change-password') return <Navigate to="/change-password" replace />;
+  if (!user.mustChangePassword && needsTwoStep(user) && loc.pathname !== '/two-step') return <Navigate to="/two-step" replace />;
   if (allow && !allow(user.role)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -66,6 +68,7 @@ export function App() {
       <Route path="/verify" element={<Verify />} />
       <Route path="/verify/:code" element={<Verify />} />
       <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
+      <Route path="/two-step" element={<RequireAuth><TwoStepRequired /></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Home />} />
         <Route path="schools" element={<RequireAuth allow={isOversight}><Schools /></RequireAuth>} />

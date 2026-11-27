@@ -111,15 +111,24 @@ export function NewAccountForm(props: {
 export function AccountsTable({ users, onChanged, showSchool }: { users: User[]; onChanged: () => void; showSchool: boolean }) {
   const { user: me } = useAuth();
   const [creds, setCreds] = useState<NewCredentials | null>(null);
-  const [confirm, setConfirm] = useState<{ id: string; action: 'reset' | 'deactivate' } | null>(null);
+  const [confirm, setConfirm] = useState<{ id: string; action: 'reset' | 'deactivate' | 'twostep' } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!me) return null;
   const canManage = (u: User) => CAN_CREATE[me.role].includes(u.role) && u.id !== me.id;
 
-  async function act(u: User, action: 'reset' | 'deactivate' | 'reactivate') {
+  // Only a Ministry administrator can reset two-step sign-in on a Ministry account.
+  const canResetTwoStep = (u: User) => u.twoStepEnabled && (!u.twoStepRequired || me.role === 'MINISTRY_ADMIN');
+
+  async function act(u: User, action: 'reset' | 'deactivate' | 'reactivate' | 'twostep') {
     setError(null);
+    setNotice(null);
     try {
       if (action === 'reset') setCreds(await api<NewCredentials>(`/users/${u.id}/reset-password`, { method: 'POST' }));
+      else if (action === 'twostep') {
+        await api(`/users/${u.id}/reset-two-step`, { method: 'POST' });
+        setNotice(`Two-step sign-in was reset for ${u.fullName}. They have been signed out and ${u.twoStepRequired ? 'must set it up again' : 'can set it up again'} when they next sign in.`);
+      }
       else await api(`/users/${u.id}`, { method: 'PATCH', json: { isActive: action === 'reactivate' } });
       setConfirm(null);
       onChanged();
@@ -132,6 +141,7 @@ export function AccountsTable({ users, onChanged, showSchool }: { users: User[];
     <>
       {creds && <div className="mt" style={{ marginBottom: 14 }}><CredentialsPanel creds={creds} reset onDone={() => setCreds(null)} /></div>}
       <ErrorAlert error={error} />
+      {notice && <div className="alert ok" style={{ marginBottom: 12 }}>{notice}</div>}
       <div className="tbl">
         <table>
           <thead>
@@ -160,13 +170,16 @@ export function AccountsTable({ users, onChanged, showSchool }: { users: User[];
                   {canManage(u) &&
                     (confirm?.id === u.id ? (
                       <span className="row actions">
-                        <span className="small">{confirm.action === 'reset' ? 'Issue a new temporary password?' : 'Deactivate this account?'}</span>
+                        <span className="small">
+                          {confirm.action === 'reset' ? 'Issue a new temporary password?' : confirm.action === 'twostep' ? 'Reset two-step sign-in (for a lost phone)?' : 'Deactivate this account?'}
+                        </span>
                         <button className={`btn sm ${confirm.action === 'deactivate' ? 'danger' : 'pri'}`} onClick={() => act(u, confirm.action)}>Yes</button>
                         <button className="btn sm" onClick={() => setConfirm(null)}>No</button>
                       </span>
                     ) : (
                       <span className="row actions">
                         <button className="btn sm" onClick={() => setConfirm({ id: u.id, action: 'reset' })}>Reset password</button>
+                        {canResetTwoStep(u) && <button className="btn sm" onClick={() => setConfirm({ id: u.id, action: 'twostep' })}>Reset two-step</button>}
                         {u.isActive ? (
                           <button className="btn sm danger" onClick={() => setConfirm({ id: u.id, action: 'deactivate' })}>Deactivate</button>
                         ) : (

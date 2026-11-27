@@ -13,6 +13,10 @@ export interface User {
   /** LGA education officers and LGA inspectors: the one LGA they oversee. */
   lga: string | null;
   mustChangePassword: boolean;
+  /** Two-step sign-in (authenticator app) is on for this account. */
+  twoStepEnabled: boolean;
+  /** Two-step sign-in is required for this account's role (Ministry administrators and officers). */
+  twoStepRequired: boolean;
   isActive: boolean;
   lockedUntil: string | null;
   lastLoginAt: string | null;
