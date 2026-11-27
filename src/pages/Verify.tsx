@@ -44,7 +44,10 @@ export function Verify() {
 
   return (
     <div className="verify">
-      <p className="small"><Link to="/">Osun EduOS</Link></p>
+      <header className="verify-top">
+        <Link to="/" className="brand" aria-label="Osun EduOS home"><b>Osun EduOS</b><span>Ministry of Education, State of Osun</span></Link>
+        <Link to="/" className="auth-back">← Back to home</Link>
+      </header>
       <h1>Check a report card</h1>
       <p className="muted">Enter the verification code printed at the bottom of a report card to confirm it matches the results the school released in EduOS.</p>
       <form className="row mt" onSubmit={submit}>

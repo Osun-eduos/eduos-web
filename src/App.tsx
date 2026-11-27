@@ -42,6 +42,7 @@ import { PopulationPage } from './pages/Population';
 import { StaffRegister } from './pages/StaffRegister';
 import { InspectionForm } from './pages/InspectionForm';
 import { Verify } from './pages/Verify';
+import { Landing } from './pages/Landing';
 import { ExamRecords } from './pages/ExamRecords';
 import { MySchool } from './pages/SchoolDetail';
 
@@ -54,7 +55,8 @@ function RequireAuth({ children, allow }: { children: ReactNode; allow?: (r: Rol
   const { user, ready } = useAuth();
   const loc = useLocation();
   if (!ready) return <p className="muted" style={{ padding: 24 }}>Loading…</p>;
-  if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  // Signed-out visitors to the front page see the public landing page; anywhere else asks them to sign in.
+  if (!user) return loc.pathname === '/' ? <Landing /> : <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (user.mustChangePassword && loc.pathname !== '/change-password') return <Navigate to="/change-password" replace />;
   if (!user.mustChangePassword && needsTwoStep(user) && loc.pathname !== '/two-step') return <Navigate to="/two-step" replace />;
   if (allow && !allow(user.role)) return <Navigate to="/" replace />;
