@@ -555,7 +555,6 @@ export function Landing() {
           <div className="lp-giant" aria-hidden="true">Osun EduOS</div>
           <div className="lp-legal">
             <span>© {new Date().getFullYear()} Ministry of Education, State of Osun. All rights reserved.</span>
-            <span>Photos: Unsplash (Abubakar Balogun, Emmanuel Ikwuegbu, Dike Darion, Ben White, Sipho Ngondo, David Rotimi)</span>
             <a className="lp-totop" href="#root" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); }}>Back to top ↑</a>
           </div>
         </div>
