@@ -1,5 +1,7 @@
 # Dependabot version updates. Security updates are turned on in the repository settings.
 # cooldown: wait 14 days after a release before proposing it, so brand-new versions settle first.
+# Major versions are skipped for routine updates because they need planned upgrade work.
+# Vulnerabilities still show up as Dependabot alerts in the Security tab whatever the version.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -13,6 +15,9 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
