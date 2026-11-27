@@ -76,9 +76,17 @@ To view the prototype only, open `prototype/index.html` in a browser.
 npm run build      # type-checks and builds into dist/
 ```
 
-`dist/` is a static site. It includes `_redirects` (so links like `/accounts` work on Cloudflare Pages) and `_headers`. Set `VITE_API_URL` at build time if the API is not served at `/api` on the same site.
+`dist/` is a static site. It includes `_redirects` (so links like `/accounts` work on Cloudflare Pages) and `_headers`.
 
-Host the web app and the API on the **same site** (for example `eduos.example.gov.ng` and `api.eduos.example.gov.ng`, or the API under `/api`), because the sign-in cookie uses `SameSite=Strict`. See [docs/deployment.md](docs/deployment.md).
+The live app is on **Cloudflare Pages** (project `osun-eduos-app`, set up in `wrangler.toml`). A small Pages Function, `functions/api/[[path]].ts`, passes `/api/*` on to the API at `API_ORIGIN`, so the browser only talks to the web app's own address and the `SameSite=Strict` sign-in cookie keeps working. To deploy by hand:
+
+```bash
+npm run build && npx wrangler@4.161.0 pages deploy --branch=main
+```
+
+Pushes to `main` deploy automatically once the Cloudflare secrets are set (see `.github/workflows/deploy.yml` and the [deployment guide](https://github.com/Osun-eduos/osun-eduos/blob/main/docs/deployment.md)). To try the function locally against an API on port 3000: `npx wrangler@4.161.0 pages dev --binding API_ORIGIN=http://localhost:3000`.
+
+If you host the web app elsewhere, serve the API on the same site (for example under `/api`) or set `VITE_API_URL` at build time to an API on the same site.
 
 ## Layout
 

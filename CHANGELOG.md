@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.2] - 2026-11-27
+
+### Added
+- Cloudflare Pages hosting for the real app (`osun-eduos-app`): `wrangler.toml`, and a Pages Function that passes `/api/*` on to the API so the sign-in cookie stays first-party. The deploy workflow now deploys the app too once enabled, alongside the prototype.
+
 ## [0.9.1] - 2026-11-26
 
 ### Added

@@ -1,0 +1,9 @@
+# Cloudflare Pages project for the real Osun EduOS web app (the prototype is a separate project, osun-eduos).
+# Deploy with: npm run build && npx wrangler pages deploy
+name = "osun-eduos-app"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Where functions/api/[[path]].ts sends /api/* requests. Change it if the API moves.
+API_ORIGIN = "https://osun-eduos-api.onrender.com"

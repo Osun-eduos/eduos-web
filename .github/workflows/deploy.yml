@@ -3,16 +3,32 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
-    paths: ["prototype/**"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
-    # Skipped until the Cloudflare secrets and project variable are set (see docs/deployment.md).
-    if: ${{ vars.CLOUDFLARE_PAGES_PROJECT != '' }}
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      prototype: ${{ steps.f.outputs.prototype }}
+      app: ${{ steps.f.outputs.app }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - id: f
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "prototype=true" >> $GITHUB_OUTPUT; echo "app=true" >> $GITHUB_OUTPUT; exit 0; fi
+          changed=$(git diff --name-only HEAD~1 HEAD)
+          echo "prototype=$(echo "$changed" | grep -q '^prototype/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "app=$(echo "$changed" | grep -qvE '^(prototype/|docs/|.*\.md$)' && echo true || echo false)" >> $GITHUB_OUTPUT
+
+  prototype:
+    # Skipped until the Cloudflare secrets and project variable are set (see docs/deployment.md in osun-eduos).
+    needs: changes
+    if: ${{ vars.CLOUDFLARE_PAGES_PROJECT != '' && needs.changes.outputs.prototype == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -21,4 +37,27 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.161.0"
           command: pages deploy prototype --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+
+  app:
+    # The real web app (project and API address in wrangler.toml). Skipped until the Cloudflare secrets are set
+    # and the repository variable CLOUDFLARE_DEPLOY_APP is "true".
+    needs: changes
+    if: ${{ vars.CLOUDFLARE_DEPLOY_APP == 'true' && needs.changes.outputs.app == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy the web app to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.161.0"
+          command: pages deploy --branch=main
